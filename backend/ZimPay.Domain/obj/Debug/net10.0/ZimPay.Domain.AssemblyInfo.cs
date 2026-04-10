@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ZimPay.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ed56e5215ac720b31cf69cd254e3bb05fc04d712")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2d769247686fb6a4514e3d6264dd35a846abba0d")]
 [assembly: System.Reflection.AssemblyProductAttribute("ZimPay.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ZimPay.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
