@@ -126,7 +126,13 @@ class AddToWalletScreen extends StatelessWidget {
                   delegate: SliverChildListDelegate([
                     // Scan Card Section
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        },
                       child: Container(
                         decoration: BoxDecoration(
                           color: surfaceContainerLowestColor,
@@ -258,7 +264,8 @@ class AddToWalletScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    _buildOptionItem(
+    _buildOptionItem(
+                      context: context,
                       icon: Icons.credit_card,
                       iconColor: Colors.blue[600]!,
                       bgColor: Colors.blue[50]!,
@@ -271,6 +278,7 @@ class AddToWalletScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     _buildOptionItem(
+                      context: context,
                       icon: Icons.directions_subway,
                       iconColor: secondaryColor,
                       bgColor: const Color(0xFFE8F5E9),
@@ -283,6 +291,7 @@ class AddToWalletScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     _buildOptionItem(
+                      context: context,
                       icon: Icons.card_membership,
                       iconColor: Colors.amber[600]!,
                       bgColor: Colors.yellow[50]!,
@@ -295,6 +304,7 @@ class AddToWalletScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     _buildOptionItem(
+                      context: context,
                       icon: Icons.card_giftcard,
                       iconColor: tertiaryColor,
                       bgColor: const Color(0xFFFFEBEE),
@@ -340,7 +350,7 @@ class AddToWalletScreen extends StatelessWidget {
                                   color: onSurfaceVariantColor,
                                 ),
                                 children: [
-                                  TextSpan(text: 'Your data is protected by Google\'s industry-leading security. '),
+                                  TextSpan(text: 'Your data is protected by Zim Pay\'s industry-leading security. '),
                                   TextSpan(
                                     text: 'Learn more',
                                     style: TextStyle(
@@ -493,6 +503,7 @@ class AddToWalletScreen extends StatelessWidget {
   }
 
   Widget _buildOptionItem({
+    required BuildContext context,
     required IconData icon,
     required Color iconColor,
     required Color bgColor,
@@ -506,7 +517,13 @@ class AddToWalletScreen extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        },
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(20),

@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'add_to_wallet_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class GettingStartedScreen extends StatelessWidget {
@@ -41,7 +42,7 @@ class GettingStartedScreen extends StatelessWidget {
                     const Icon(Icons.wallet, color: primaryColor, size: 24),
                     const SizedBox(width: 8),
                     Text(
-                      'Wallet',
+                      'Zim Pay',
                       style: GoogleFonts.plusJakartaSans(
                         color: primaryColor,
                         fontWeight: FontWeight.bold,
@@ -208,7 +209,12 @@ class GettingStartedScreen extends StatelessWidget {
                               ],
                             ),
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const AddToWalletScreen()),
+                              );
+                            },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primaryColor,
                                 foregroundColor: Colors.white,
@@ -231,7 +237,12 @@ class GettingStartedScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             TextButton.icon(
-                              onPressed: () {},
+                              onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const AddToWalletScreen()),
+                              );
+                            },
                               icon: const Icon(Icons.open_in_new, size: 14),
                               label: const Text('Learn more'),
                               style: TextButton.styleFrom(
@@ -250,7 +261,12 @@ class GettingStartedScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const AddToWalletScreen()),
+                              );
+                            },
                               child: const Text('Sign in'),
                               style: TextButton.styleFrom(
                                 foregroundColor: primaryColor,
@@ -306,7 +322,7 @@ class GettingStartedScreen extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 32),
                       child: Text(
-                        '© 2024 Google Wallet • Privacy • Terms',
+                        '© 2024 Zim Pay • Privacy • Terms',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           fontSize: 12,

@@ -1,60 +1,70 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/wallet_item.dart';
+import '../constants.dart';
 
 class WalletRepository {
-  Future<List<WalletItem>> getWalletItems() async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
+  final String baseUrl = ApiConstants.baseUrl;
+
+  Future<List<WalletItem>> getWalletItems(int userId) async {
+    print('Fetching wallet items for user $userId');
+    // 1. Fetch Payment Methods (Credit/Debit Cards)
+    final pmUrl = '$baseUrl/user/$userId/payment-methods';
+    print('Fetching payment methods from: $pmUrl');
+    final pmResponse = await http.get(
+      Uri.parse(pmUrl),
+    );
     
-    return [
-      CreditCard(
-        id: '1',
-        title: 'Bank of Future',
-        bankName: 'Bank of Future',
-        cardNumber: '•••• •••• •••• 8892',
-        expiryDate: '12/28',
-        primaryColor: const Color(0xFF0058BA),
-        secondaryColor: const Color(0xFF6C9FFF),
-      ),
-      TransitPass(
-        id: '2',
-        title: 'City Transit',
-        balance: '\$42.50',
-        primaryColor: const Color(0xFF006A2B),
-        secondaryColor: const Color(0xFF86F898),
-      ),
-    ];
+    // 2. Fetch Passes (Transit, Tickets, etc.)
+    final passUrl = '$baseUrl/user/$userId/passes';
+    print('Fetching passes from: $passUrl');
+    final passResponse = await http.get(
+      Uri.parse(passUrl),
+    );
+
+    print('PM response: ${pmResponse.statusCode}, Pass response: ${passResponse.statusCode}');
+    List<WalletItem> items = [];
+
+    if (pmResponse.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(pmResponse.body);
+      final List<dynamic> pmsJson = data['data'];
+      items.addAll(pmsJson.map((json) => CreditCard.fromJson(json)).toList());
+    } else {
+      print('PM fetch failed: ${pmResponse.body}');
+    }
+
+    if (passResponse.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(passResponse.body);
+      final List<dynamic> passesJson = data['data'];
+      for (var json in passesJson) {
+        if (json['type'] == 'TransitPass') {
+          items.add(TransitPass.fromJson(json));
+        }
+      }
+    } else {
+      print('Passes fetch failed: ${passResponse.body}');
+    }
+
+    return items;
   }
 
-  Future<List<LoyaltyCard>> getLoyaltyCards() async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 400));
+  Future<List<LoyaltyCard>> getLoyaltyCards(int userId) async {
+    print('Fetching loyalty cards for user $userId');
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/$userId/passes'),
+    );
 
-    return [
-      LoyaltyCard(
-        id: '3',
-        title: 'Coffee Shop Rewards',
-        subtitle: '8 of 10 stars earned',
-        icon: Icons.coffee,
-        iconColor: const Color(0xFFB41A14),
-        bgColor: const Color(0xFFFF9384).withValues(alpha: 0.3),
-      ),
-      LoyaltyCard(
-        id: '4',
-        title: 'Public Library',
-        subtitle: 'Membership Active',
-        icon: Icons.local_library,
-        iconColor: const Color(0xFF0058BA),
-        bgColor: const Color(0xFF6C9FFF).withValues(alpha: 0.3),
-      ),
-      LoyaltyCard(
-        id: '5',
-        title: 'Everest Gym',
-        subtitle: 'Next billing: Oct 12',
-        icon: Icons.fitness_center,
-        iconColor: const Color(0xFF006A2B),
-        bgColor: const Color(0xFF86F898).withValues(alpha: 0.3),
-      ),
-    ];
+    print('Loyalty cards response: ${response.statusCode}');
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final List<dynamic> passesJson = data['data'];
+      return passesJson
+          .where((json) => json['type'] == 'Loyalty')
+          .map((json) => LoyaltyCard.fromJson(json))
+          .toList();
+    } else {
+      print('Failed to load loyalty cards: ${response.body}');
+      throw Exception('Failed to load loyalty cards');
+    }
   }
 }

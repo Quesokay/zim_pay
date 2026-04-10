@@ -26,6 +26,18 @@ class CreditCard extends WalletItem {
     required this.primaryColor,
     required this.secondaryColor,
   }) : super(type: WalletItemType.creditCard);
+
+  factory CreditCard.fromJson(Map<String, dynamic> json) {
+    return CreditCard(
+      id: json['id'].toString(),
+      title: json['bankName'] ?? 'Credit Card',
+      bankName: json['bankName'] ?? 'Bank',
+      cardNumber: '•••• •••• •••• ${json['cardNumber']?.toString().split(' ').last ?? '0000'}',
+      expiryDate: json['expiryDate'] ?? 'MM/YY',
+      primaryColor: const Color(0xFF0058BA),
+      secondaryColor: const Color(0xFF6C9FFF),
+    );
+  }
 }
 
 class TransitPass extends WalletItem {
@@ -40,6 +52,16 @@ class TransitPass extends WalletItem {
     required this.primaryColor,
     required this.secondaryColor,
   }) : super(type: WalletItemType.transitPass);
+
+  factory TransitPass.fromJson(Map<String, dynamic> json) {
+    return TransitPass(
+      id: json['id'].toString(),
+      title: json['title'] ?? 'Transit Pass',
+      balance: '\$${(json['balance'] ?? 0.0).toStringAsFixed(2)}',
+      primaryColor: const Color(0xFF006A2B),
+      secondaryColor: const Color(0xFF86F898),
+    );
+  }
 }
 
 class LoyaltyCard extends WalletItem {
@@ -56,4 +78,15 @@ class LoyaltyCard extends WalletItem {
     required this.iconColor,
     required this.bgColor,
   }) : super(type: WalletItemType.loyaltyCard);
+
+  factory LoyaltyCard.fromJson(Map<String, dynamic> json) {
+    return LoyaltyCard(
+      id: json['id'].toString(),
+      title: json['title'] ?? 'Loyalty Card',
+      subtitle: json['details'] ?? 'Membership',
+      icon: Icons.card_membership,
+      iconColor: const Color(0xFF0058BA),
+      bgColor: const Color(0xFF6C9FFF).withValues(alpha: 0.3),
+    );
+  }
 }

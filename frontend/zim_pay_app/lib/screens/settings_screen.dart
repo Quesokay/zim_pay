@@ -208,7 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     // Version
                     Center(
                       child: Text(
-                        'GOOGLE WALLET v24.12.8',
+                        'ZIM PAY v24.12.8',
                         style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,

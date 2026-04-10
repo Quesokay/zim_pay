@@ -47,7 +47,7 @@ class PassesLoyaltyScreen extends StatelessWidget {
                     const Icon(Icons.account_balance_wallet, color: primaryColor, size: 30),
                     const SizedBox(width: 12),
                     Text(
-                      'Google Wallet',
+                      'Zim Pay',
                       style: GoogleFonts.plusJakartaSans(
                         color: onSurfaceColor,
                         fontWeight: FontWeight.bold,

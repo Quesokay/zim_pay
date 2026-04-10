@@ -318,7 +318,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Your card number is replaced with a unique digital identifier, so your actual details are never shared with merchants.',
+                                  'Your card number is replaced with a unique digital identifier, so your actual details are never shared with merchants. Zim Pay keeps your data safe.',
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     color: onSurfaceVariantColor,

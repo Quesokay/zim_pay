@@ -1,72 +1,25 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/transaction.dart';
+import '../constants.dart';
 
 class TransactionRepository {
-  Future<List<Transaction>> getTransactions() async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 600));
+  final String baseUrl = ApiConstants.baseUrl;
 
-    return [
-      Transaction(
-        id: '1',
-        title: 'Whole Foods Market',
-        date: DateTime.now(),
-        status: TransactionStatus.completed,
-        amount: -84.20,
-        icon: Icons.shopping_bag,
-        iconColor: const Color(0xFF0058BA),
-        bgColor: const Color(0xFFDEE3E8),
-      ),
-      Transaction(
-        id: '2',
-        title: 'Google Play Reward',
-        date: DateTime.now(),
-        status: TransactionStatus.completed,
-        amount: 5.00,
-        icon: Icons.card_giftcard,
-        iconColor: const Color(0xFF006A2B),
-        bgColor: const Color(0xFFCFFFCE),
-      ),
-      Transaction(
-        id: '3',
-        title: 'Uber Technologies',
-        date: DateTime.now(),
-        status: TransactionStatus.pending,
-        amount: -22.50,
-        icon: Icons.local_taxi,
-        iconColor: const Color(0xFF0058BA),
-        bgColor: const Color(0xFFDEE3E8),
-      ),
-      Transaction(
-        id: '4',
-        title: 'Blue Bottle Coffee',
-        date: DateTime.now(),
-        status: TransactionStatus.completed,
-        amount: -6.75,
-        icon: Icons.coffee,
-        iconColor: const Color(0xFF0058BA),
-        bgColor: const Color(0xFFDEE3E8),
-      ),
-      Transaction(
-        id: '5',
-        title: 'Transport for London',
-        date: DateTime.now(),
-        status: TransactionStatus.completed,
-        amount: -2.40,
-        icon: Icons.train,
-        iconColor: const Color(0xFF0058BA),
-        bgColor: const Color(0xFFDEE3E8),
-      ),
-      Transaction(
-        id: '6',
-        title: 'Netflix Subscription',
-        date: DateTime.now(),
-        status: TransactionStatus.declined,
-        amount: -15.99,
-        icon: Icons.warning,
-        iconColor: const Color(0xFFB41A14),
-        bgColor: const Color(0xFFFF9384).withValues(alpha: 0.1),
-      ),
-    ];
+  Future<List<Transaction>> getTransactions(int userId) async {
+    print('Fetching transactions for user $userId from: $baseUrl/user/$userId/transactions');
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/$userId/transactions'),
+    );
+
+    print('GetTransactions response: ${response.statusCode}');
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final List<dynamic> transactionsJson = data['data'];
+      return transactionsJson.map((json) => Transaction.fromJson(json)).toList();
+    } else {
+      print('Failed to load transactions: ${response.body}');
+      throw Exception('Failed to load transactions');
+    }
   }
 }

@@ -22,7 +22,7 @@ class _CardsScreenState extends State<CardsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<WalletBloc>().add(LoadWalletItems());
+    context.read<WalletBloc>().add(const LoadWalletItems(userId: 1));
   }
 
   @override
@@ -66,7 +66,7 @@ class _CardsScreenState extends State<CardsScreen> {
                       onPressed: () => Navigator.pop(context),
                     ),
                     title: Text(
-                      'Wallet',
+                      'Zim Pay',
                       style: GoogleFonts.plusJakartaSans(
                         color: onSurfaceColor,
                         fontWeight: FontWeight.bold,

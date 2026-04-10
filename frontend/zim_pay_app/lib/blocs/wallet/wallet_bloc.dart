@@ -16,8 +16,8 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
   ) async {
     emit(state.copyWith(status: WalletStatus.loading));
     try {
-      final items = await walletRepository.getWalletItems();
-      final loyaltyCards = await walletRepository.getLoyaltyCards();
+      final items = await walletRepository.getWalletItems(event.userId);
+      final loyaltyCards = await walletRepository.getLoyaltyCards(event.userId);
       emit(state.copyWith(
         status: WalletStatus.success,
         walletItems: items,

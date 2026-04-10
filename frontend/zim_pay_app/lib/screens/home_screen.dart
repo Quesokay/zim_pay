@@ -38,8 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     });
-    // Trigger initial load
-    context.read<WalletBloc>().add(LoadWalletItems());
+    // Trigger initial load with a default user ID (e.g., 1)
+    context.read<WalletBloc>().add(const LoadWalletItems(userId: 1));
   }
 
   @override
@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const Icon(Icons.account_balance_wallet, color: primaryColor, size: 28),
                         const SizedBox(width: 12),
                         Text(
-                          'Google Wallet',
+                          'Zim Pay',
                           style: GoogleFonts.plusJakartaSans(
                             color: onSurfaceColor,
                             fontWeight: FontWeight.bold,
@@ -290,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const Icon(Icons.verified_user, color: primaryColor),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Your payment info is securely encrypted. Google Wallet does not share your actual card numbers with businesses.',
+                                  'Your payment info is securely encrypted. Zim Pay does not share your actual card numbers with businesses.',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
                                     fontSize: 14,

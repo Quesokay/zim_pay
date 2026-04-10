@@ -80,7 +80,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   onPressed: () => Navigator.pop(context),
                 ),
                 title: Text(
-                  'Google Wallet',
+                  'Zim Pay',
                   style: GoogleFonts.plusJakartaSans(
                     color: primaryColor,
                     fontWeight: FontWeight.bold,
@@ -128,7 +128,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         children: [
                           // Branding Area
                           const SizedBox(height: 8),
-                          _buildGoogleLogo(),
+                          Icon(Icons.account_balance_wallet, color: primaryColor, size: 48),
                           const SizedBox(height: 24),
                           Text(
                             'Sign in',
@@ -141,7 +141,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'with your Google Account',
+                            'with your Zim Pay Account',
                             style: GoogleFonts.inter(
                               fontSize: 16,
                               color: onSurfaceVariantColor,

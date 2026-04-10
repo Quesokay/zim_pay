@@ -23,7 +23,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<TransactionBloc>().add(LoadTransactions());
+    context.read<TransactionBloc>().add(const LoadTransactions(userId: 1));
   }
 
   @override
@@ -81,7 +81,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Wallet',
+                          'Zim Pay',
                           style: GoogleFonts.plusJakartaSans(
                             color: onSurfaceColor,
                             fontWeight: FontWeight.bold,
