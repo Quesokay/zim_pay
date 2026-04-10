@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import '../repositories/health_repository.dart';
-import 'getting_started_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -80,7 +80,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         Future.delayed(Duration(milliseconds: remainingDelay > 0 ? remainingDelay : 500), () {
           if (mounted) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const GettingStartedScreen()),
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
             );
           }
         });
@@ -264,7 +264,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     TextButton(
                       onPressed: () {
                         Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (context) => const GettingStartedScreen()),
+                          MaterialPageRoute(builder: (context) => const HomeScreen()),
                         );
                       },
                       child: Text(

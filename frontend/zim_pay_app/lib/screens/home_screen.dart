@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../blocs/wallet/wallet_bloc.dart';
 import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
+import '../blocs/user/user_bloc.dart';
 import '../models/wallet_item.dart';
 import 'add_to_wallet_screen.dart';
 import 'card_details_screen.dart';
@@ -38,8 +39,14 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     });
-    // Trigger initial load with a default user ID (e.g., 1)
-    context.read<WalletBloc>().add(const LoadWalletItems(userId: 1));
+
+    final userState = context.read<UserBloc>().state;
+    if (userState is UserCreated) {
+      context.read<WalletBloc>().add(LoadWalletItems(userId: userState.user.id));
+    } else {
+      // Fallback for development if no user is logged in
+      context.read<WalletBloc>().add(const LoadWalletItems(userId: 1));
+    }
   }
 
   @override
@@ -63,6 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBody: true,
       body: BlocBuilder<WalletBloc, WalletState>(
         builder: (context, state) {
+          print('HomeScreen: BlocBuilder state status: ${state.status}');
+          print('HomeScreen: Wallet items: ${state.walletItems.length}');
+          print('HomeScreen: Loyalty cards: ${state.loyaltyCards.length}');
+
           if (state.status == WalletStatus.loading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -372,7 +383,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const CardDetailsScreen()),
+            MaterialPageRoute(builder: (context) => CardDetailsScreen(item: item)),
           );
         },
         child: _buildCreditCard(
@@ -384,11 +395,19 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } else if (item is TransitPass) {
-      return _buildTransitPass(
-        item.primaryColor,
-        item.secondaryColor,
-        item.title,
-        item.balance,
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => CardDetailsScreen(item: item)),
+          );
+        },
+        child: _buildTransitPass(
+          item.primaryColor,
+          item.secondaryColor,
+          item.title,
+          item.balance,
+        ),
       );
     }
     return const SizedBox.shrink();
@@ -400,15 +419,23 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color onSurfaceVariantColor,
     required Color surfaceContainerLowestColor,
   }) {
-    return _buildLoyaltyItem(
-      icon: card.icon,
-      iconColor: card.iconColor,
-      bgColor: card.bgColor,
-      title: card.title,
-      subtitle: card.subtitle,
-      onSurfaceColor: onSurfaceColor,
-      onSurfaceVariantColor: onSurfaceVariantColor,
-      surfaceContainerLowestColor: surfaceContainerLowestColor,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => CardDetailsScreen(item: card)),
+        );
+      },
+      child: _buildLoyaltyItem(
+        icon: card.icon,
+        iconColor: card.iconColor,
+        bgColor: card.bgColor,
+        title: card.title,
+        subtitle: card.subtitle,
+        onSurfaceColor: onSurfaceColor,
+        onSurfaceVariantColor: onSurfaceVariantColor,
+        surfaceContainerLowestColor: surfaceContainerLowestColor,
+      ),
     );
   }
 

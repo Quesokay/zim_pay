@@ -23,12 +23,26 @@ namespace ZimPay.Presentation.Controllers
             try
             {
                 var paymentMethodId = await _mediator.Send(command);
-                return CreatedAtAction(nameof(AddPaymentMethod), new { id = paymentMethodId }, paymentMethodId);
+                return Ok(ApiResponse<int>.SuccessResponse(paymentMethodId, "Payment method added successfully"));
             }
             catch (System.InvalidOperationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePaymentMethod(int id, [FromQuery] int userId)
+        {
+            var command = new DeletePaymentMethodCommand(id, userId);
+            var result = await _mediator.Send(command);
+
+            if (!result)
+            {
+                return NotFound(ApiResponse<bool>.ErrorResponse("Payment method not found or does not belong to user"));
+            }
+
+            return Ok(ApiResponse<bool>.SuccessResponse(true, "Payment method deleted successfully"));
         }
     }
 }

@@ -3203,11 +3203,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\sources\\zim_pay\\backend\\ZimPay.Presentation\\ZimPay.Presentation.csproj",
+      "projectUniqueName": "c:\\sources\\zim_pay\\backend\\ZimPay.Presentation\\ZimPay.Presentation.csproj",
       "projectName": "ZimPay.Presentation",
-      "projectPath": "C:\\sources\\zim_pay\\backend\\ZimPay.Presentation\\ZimPay.Presentation.csproj",
+      "projectPath": "c:\\sources\\zim_pay\\backend\\ZimPay.Presentation\\ZimPay.Presentation.csproj",
       "packagesPath": "C:\\Users\\moyov\\.nuget\\packages\\",
-      "outputPath": "C:\\sources\\zim_pay\\backend\\ZimPay.Presentation\\obj\\",
+      "outputPath": "c:\\sources\\zim_pay\\backend\\ZimPay.Presentation\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\moyov\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -3222,11 +3222,11 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\sources\\zim_pay\\backend\\ZimPay.Application\\ZimPay.Application.csproj": {
-              "projectPath": "C:\\sources\\zim_pay\\backend\\ZimPay.Application\\ZimPay.Application.csproj"
+            "c:\\sources\\zim_pay\\backend\\ZimPay.Application\\ZimPay.Application.csproj": {
+              "projectPath": "c:\\sources\\zim_pay\\backend\\ZimPay.Application\\ZimPay.Application.csproj"
             },
-            "C:\\sources\\zim_pay\\backend\\ZimPay.Infrastructure\\ZimPay.Infrastructure.csproj": {
-              "projectPath": "C:\\sources\\zim_pay\\backend\\ZimPay.Infrastructure\\ZimPay.Infrastructure.csproj"
+            "c:\\sources\\zim_pay\\backend\\ZimPay.Infrastructure\\ZimPay.Infrastructure.csproj": {
+              "projectPath": "c:\\sources\\zim_pay\\backend\\ZimPay.Infrastructure\\ZimPay.Infrastructure.csproj"
             }
           }
         }

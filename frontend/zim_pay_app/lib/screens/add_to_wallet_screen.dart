@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'home_screen.dart';
 import 'cards_screen.dart';
+import 'add_loyalty_screen.dart';
+import 'add_transit_pass_screen.dart';
 import 'manual_entry_screen.dart';
 import 'transaction_history_screen.dart';
 import 'settings_screen.dart';
+import 'card_scanner_screen.dart';
 
 class AddToWalletScreen extends StatelessWidget {
   static const primaryColor = Color(0xFF0058BA);
@@ -127,12 +130,11 @@ class AddToWalletScreen extends StatelessWidget {
                     // Scan Card Section
                     GestureDetector(
                       onTap: () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (route) => false,
-          );
-        },
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CardScannerScreen()),
+                        );
+                      },
                       child: Container(
                         decoration: BoxDecoration(
                           color: surfaceContainerLowestColor,
@@ -275,6 +277,12 @@ class AddToWalletScreen extends StatelessWidget {
                       onSurfaceVariantColor: onSurfaceVariantColor,
                       surfaceContainerLowestColor: surfaceContainerLowestColor,
                       surfaceContainerLowColor: surfaceContainerLowColor,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ManualEntryScreen()),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     _buildOptionItem(
@@ -288,6 +296,12 @@ class AddToWalletScreen extends StatelessWidget {
                       onSurfaceVariantColor: onSurfaceVariantColor,
                       surfaceContainerLowestColor: surfaceContainerLowestColor,
                       surfaceContainerLowColor: surfaceContainerLowColor,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AddTransitPassScreen()),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     _buildOptionItem(
@@ -301,6 +315,17 @@ class AddToWalletScreen extends StatelessWidget {
                       onSurfaceVariantColor: onSurfaceVariantColor,
                       surfaceContainerLowestColor: surfaceContainerLowestColor,
                       surfaceContainerLowColor: surfaceContainerLowColor,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddLoyaltyScreen(
+                              initialTitle: '',
+                              screenTitle: 'Add Loyalty Card',
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     _buildOptionItem(
@@ -314,6 +339,17 @@ class AddToWalletScreen extends StatelessWidget {
                       onSurfaceVariantColor: onSurfaceVariantColor,
                       surfaceContainerLowestColor: surfaceContainerLowestColor,
                       surfaceContainerLowColor: surfaceContainerLowColor,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddLoyaltyScreen(
+                              initialTitle: 'Gift Card',
+                              screenTitle: 'Add Gift Card',
+                            ),
+                          ),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 48),
@@ -513,17 +549,12 @@ class AddToWalletScreen extends StatelessWidget {
     required Color onSurfaceVariantColor,
     required Color surfaceContainerLowestColor,
     required Color surfaceContainerLowColor,
+    required VoidCallback onTap,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (route) => false,
-          );
-        },
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(20),

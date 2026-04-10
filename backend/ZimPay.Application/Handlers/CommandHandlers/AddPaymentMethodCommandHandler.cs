@@ -28,12 +28,18 @@ namespace ZimPay.Application.Handlers.CommandHandlers
             if (!userExists)
                 throw new InvalidOperationException($"User with ID {request.UserId} not found.");
 
-            var paymentMethod = new PaymentMethod
+            // Mask card number: keep only last 4 digits for storage
+            string fullNumber = (request.PaymentMethod.CardNumber ?? "").Replace(" ", "");
+            string maskedCardNumber = fullNumber.Length >= 4
+                ? fullNumber.Substring(fullNumber.Length - 4)
+                : fullNumber;
+
+            var paymentMethod = new ZimPay.Domain.PaymentMethod
             {
                 UserId = request.UserId,
-                Type = request.PaymentMethod.Type,
-                CardNumber = request.PaymentMethod.CardNumber,
-                BankName = request.PaymentMethod.BankName,
+                Type = request.PaymentMethod.Type ?? "Credit Card",
+                CardNumber = maskedCardNumber,
+                BankName = request.PaymentMethod.BankName ?? "ZimPay Bank",
                 AccountNumber = request.PaymentMethod.AccountNumber,
                 HolderName = request.PaymentMethod.HolderName,
                 ExpiryDate = request.PaymentMethod.ExpiryDate,
@@ -42,11 +48,24 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                 AddedAt = DateTime.UtcNow
             };
 
-            // If this is the first payment method or marked as default, set as default
+            // Handle default card logic
             var existingMethods = await _paymentMethodRepository.GetByUserIdAsync(request.UserId);
             if (!System.Linq.Enumerable.Any(existingMethods))
             {
+                // First card is always default
                 paymentMethod.IsDefault = true;
+            }
+            else if (paymentMethod.IsDefault)
+            {
+                // If new card is default, unmark previous default
+                foreach (var existing in existingMethods)
+                {
+                    if (existing.IsDefault)
+                    {
+                        existing.IsDefault = false;
+                        await _paymentMethodRepository.UpdateAsync(existing);
+                    }
+                }
             }
 
             await _paymentMethodRepository.AddAsync(paymentMethod);

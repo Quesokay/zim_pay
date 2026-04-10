@@ -23,12 +23,26 @@ namespace ZimPay.Presentation.Controllers
             try
             {
                 var passId = await _mediator.Send(command);
-                return CreatedAtAction(nameof(AddPass), new { id = passId }, passId);
+                return CreatedAtAction(nameof(AddPass), new { id = passId }, ApiResponse<int>.SuccessResponse(passId, "Pass added successfully"));
             }
             catch (System.InvalidOperationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePass(int id, [FromQuery] int userId)
+        {
+            var command = new DeletePassCommand(id, userId);
+            var result = await _mediator.Send(command);
+
+            if (!result)
+            {
+                return NotFound(ApiResponse<bool>.ErrorResponse("Pass not found or does not belong to user"));
+            }
+
+            return Ok(ApiResponse<bool>.SuccessResponse(true, "Pass deleted successfully"));
         }
     }
 }

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "CbgdtPo6HjQ=",
+  "dgSpecHash": "afdhXybJhl8=",
   "success": true,
-  "projectFilePath": "C:\\sources\\zim_pay\\backend\\ZimPay.Infrastructure\\ZimPay.Infrastructure.csproj",
+  "projectFilePath": "c:\\sources\\zim_pay\\backend\\ZimPay.Infrastructure\\ZimPay.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\moyov\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
     "C:\\Users\\moyov\\.nuget\\packages\\mediatr\\14.1.0\\mediatr.14.1.0.nupkg.sha512",

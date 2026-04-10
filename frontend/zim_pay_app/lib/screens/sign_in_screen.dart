@@ -1,6 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../blocs/user/user_bloc.dart';
+import 'home_screen.dart';
+import 'registration_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -30,293 +34,325 @@ class _SignInScreenState extends State<SignInScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: Stack(
-        children: [
-          // Background Decorative Elements
-          Positioned(
-            top: -MediaQuery.of(context).size.height * 0.1,
-            right: -MediaQuery.of(context).size.width * 0.1,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.6,
-              height: MediaQuery.of(context).size.width * 0.6,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: primaryColor.withValues(alpha: 0.08),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 120, sigmaY: 120),
-                child: Container(color: Colors.transparent),
+      body: BlocListener<UserBloc, UserState>(
+        listener: (context, state) {
+          if (state is UserCreated) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              (route) => false,
+            );
+          } else if (state is UserError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        child: Stack(
+          children: [
+            // Background Decorative Elements
+            Positioned(
+              top: -MediaQuery.of(context).size.height * 0.1,
+              right: -MediaQuery.of(context).size.width * 0.1,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.6,
+                height: MediaQuery.of(context).size.width * 0.6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primaryColor.withValues(alpha: 0.08),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 120, sigmaY: 120),
+                  child: Container(color: Colors.transparent),
+                ),
               ),
             ),
-          ),
-          Positioned(
-            bottom: -MediaQuery.of(context).size.height * 0.1,
-            left: -MediaQuery.of(context).size.width * 0.1,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.5,
-              height: MediaQuery.of(context).size.width * 0.5,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFE2E8F0).withValues(alpha: 0.5),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
-                child: Container(color: Colors.transparent),
+            Positioned(
+              bottom: -MediaQuery.of(context).size.height * 0.1,
+              left: -MediaQuery.of(context).size.width * 0.1,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.5,
+                height: MediaQuery.of(context).size.width * 0.5,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFE2E8F0).withValues(alpha: 0.5),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
+                  child: Container(color: Colors.transparent),
+                ),
               ),
             ),
-          ),
 
-          CustomScrollView(
-            slivers: [
-              // TopAppBar
-              SliverAppBar(
-                floating: true,
-                pinned: true,
-                backgroundColor: const Color(0xFFF8FAFC).withValues(alpha: 0.6),
-                surfaceTintColor: Colors.transparent,
-                elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.close, color: slate600),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                title: Text(
-                  'Zim Pay',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: primaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    letterSpacing: -0.5,
+            CustomScrollView(
+              slivers: [
+                // TopAppBar
+                SliverAppBar(
+                  floating: true,
+                  pinned: true,
+                  backgroundColor: const Color(0xFFF8FAFC).withValues(alpha: 0.6),
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 0,
+                  leading: IconButton(
+                    icon: const Icon(Icons.close, color: slate600),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                ),
-                flexibleSpace: ClipRRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                    child: Container(color: Colors.transparent),
+                  title: Text(
+                    'Zim Pay',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: primaryColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.help_outline, color: slate600),
-                    onPressed: () {},
+                  flexibleSpace: ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                      child: Container(color: Colors.transparent),
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                ],
-              ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.help_outline, color: slate600),
+                      onPressed: () {},
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ),
 
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                  child: Center(
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 448),
-                      decoration: BoxDecoration(
-                        color: surfaceColor,
-                        borderRadius: BorderRadius.circular(32),
-                        border: Border.all(color: const Color(0xFFF1F5F9)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 48,
-                            offset: const Offset(0, 24),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Branding Area
-                          const SizedBox(height: 8),
-                          Icon(Icons.account_balance_wallet, color: primaryColor, size: 48),
-                          const SizedBox(height: 24),
-                          Text(
-                            'Sign in',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF0F172A),
-                              letterSpacing: -0.5,
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    child: Center(
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 448),
+                        decoration: BoxDecoration(
+                          color: surfaceColor,
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 48,
+                              offset: const Offset(0, 24),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'with your Zim Pay Account',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              color: onSurfaceVariantColor,
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Branding Area
+                            const SizedBox(height: 8),
+                            const Icon(Icons.account_balance_wallet, color: primaryColor, size: 48),
+                            const SizedBox(height: 24),
+                            Text(
+                              'Sign in',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF0F172A),
+                                letterSpacing: -0.5,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 40),
-
-                          // Form Area
-                          TextFormField(
-                            controller: _identifierController,
-                            style: GoogleFonts.inter(
-                              fontSize: 18,
-                              color: const Color(0xFF0F172A),
-                            ),
-                            decoration: InputDecoration(
-                              labelText: 'Email or phone',
-                              labelStyle: GoogleFonts.inter(
+                            const SizedBox(height: 8),
+                            Text(
+                              'with your Zim Pay Account',
+                              style: GoogleFonts.inter(
                                 fontSize: 16,
                                 color: onSurfaceVariantColor,
                               ),
-                              floatingLabelStyle: GoogleFonts.inter(
-                                color: primaryColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              filled: true,
-                              fillColor: slate50,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 20,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: slate200),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: primaryColor, width: 2),
-                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton(
-                              onPressed: () {},
-                              style: TextButton.styleFrom(
-                                foregroundColor: primaryColor,
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(0, 0),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                'Forgot email?',
-                                style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
+                            const SizedBox(height: 40),
 
-                          // Guest mode info
-                          RichText(
-                            text: TextSpan(
+                            // Form Area
+                            TextFormField(
+                              controller: _identifierController,
                               style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: onSurfaceVariantColor,
-                                height: 1.5,
+                                fontSize: 18,
+                                color: const Color(0xFF0F172A),
                               ),
-                              children: [
-                                const TextSpan(
-                                  text: 'Not your computer? Use Guest mode to sign in privately. ',
+                              decoration: InputDecoration(
+                                labelText: 'Email or phone',
+                                labelStyle: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  color: onSurfaceVariantColor,
                                 ),
-                                TextSpan(
-                                  text: 'Learn more',
+                                floatingLabelStyle: GoogleFonts.inter(
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                filled: true,
+                                fillColor: slate50,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 20,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(color: slate200),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(color: primaryColor, width: 2),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton(
+                                onPressed: () {},
+                                style: TextButton.styleFrom(
+                                  foregroundColor: primaryColor,
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: const Size(0, 0),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  'Forgot email?',
                                   style: GoogleFonts.inter(
-                                    color: primaryColor,
                                     fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Guest mode info
+                            RichText(
+                              text: TextSpan(
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: onSurfaceVariantColor,
+                                  height: 1.5,
+                                ),
+                                children: [
+                                  const TextSpan(
+                                    text: 'Not your computer? Use Guest mode to sign in privately. ',
+                                  ),
+                                  TextSpan(
+                                    text: 'Learn more',
+                                    style: GoogleFonts.inter(
+                                      color: primaryColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+
+                            // Action Buttons
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const RegistrationScreen(),
+                                      ),
+                                    );
+                                  },
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: primaryColor,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Create account',
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    if (_identifierController.text.isNotEmpty) {
+                                      context.read<UserBloc>().add(
+                                            LoginEvent(_identifierController.text),
+                                          );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    elevation: 8,
+                                    shadowColor: primaryColor.withValues(alpha: 0.2),
+                                  ),
+                                  child: BlocBuilder<UserBloc, UserState>(
+                                    builder: (context, state) {
+                                      if (state is UserLoading) {
+                                        return const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        );
+                                      }
+                                      return Text(
+                                        'Next',
+                                        style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 40),
-
-                          // Action Buttons
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              TextButton(
-                                onPressed: () {},
-                                style: TextButton.styleFrom(
-                                  foregroundColor: primaryColor,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                ),
-                                child: Text(
-                                  'Create account',
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryColor,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  elevation: 8,
-                                  shadowColor: primaryColor.withValues(alpha: 0.2),
-                                ),
-                                child: Text(
-                                  'Next',
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
-          // Bottom Footer
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: ClipRRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                child: Container(
-                  padding: const EdgeInsets.only(bottom: 32, top: 16, left: 16, right: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    border: Border(
-                      top: BorderSide(color: Colors.black.withValues(alpha: 0.05)),
+            // Bottom Footer
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: Container(
+                    padding: const EdgeInsets.only(bottom: 32, top: 16, left: 16, right: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      border: Border(
+                        top: BorderSide(color: Colors.black.withValues(alpha: 0.05)),
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildFooterItem(Icons.help_outline, 'Help Center'),
-                      _buildFooterItem(Icons.chat_bubble_outline, 'Contact Us'),
-                    ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildFooterItem(Icons.help_outline, 'Help Center'),
+                        _buildFooterItem(Icons.chat_bubble_outline, 'Contact Us'),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGoogleLogo() {
-    return SizedBox(
-      height: 40,
-      width: 40,
-      child: CustomPaint(
-        painter: GoogleLogoPainter(),
+          ],
+        ),
       ),
     );
   }
