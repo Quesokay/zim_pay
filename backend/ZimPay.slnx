@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ZimPay.Application/ZimPay.Application.csproj" />
+  <Project Path="ZimPay.Domain/ZimPay.Domain.csproj" />
+  <Project Path="ZimPay.Infrastructure/ZimPay.Infrastructure.csproj" />
+  <Project Path="ZimPay.Presentation/ZimPay.Presentation.csproj" />
+</Solution>

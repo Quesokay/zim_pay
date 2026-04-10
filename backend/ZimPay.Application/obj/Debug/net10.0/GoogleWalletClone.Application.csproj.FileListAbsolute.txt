@@ -1,0 +1,15 @@
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\bin\Debug\net10.0\GoogleWalletClone.Application.deps.json
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\bin\Debug\net10.0\GoogleWalletClone.Application.dll
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\bin\Debug\net10.0\GoogleWalletClone.Application.pdb
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\bin\Debug\net10.0\GoogleWalletClone.Domain.dll
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\bin\Debug\net10.0\GoogleWalletClone.Domain.pdb
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\obj\Debug\net10.0\GoogleWalletClone.Application.csproj.AssemblyReference.cache
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\obj\Debug\net10.0\GoogleWalletClone.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\obj\Debug\net10.0\GoogleWalletClone.Application.AssemblyInfoInputs.cache
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\obj\Debug\net10.0\GoogleWalletClone.Application.AssemblyInfo.cs
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\obj\Debug\net10.0\GoogleWalletClone.Application.csproj.CoreCompileInputs.cache
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\obj\Debug\net10.0\GoogleWa.FBACEBA5.Up2Date
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\obj\Debug\net10.0\GoogleWalletClone.Application.dll
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\obj\Debug\net10.0\refint\GoogleWalletClone.Application.dll
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\obj\Debug\net10.0\GoogleWalletClone.Application.pdb
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Application\obj\Debug\net10.0\ref\GoogleWalletClone.Application.dll

@@ -1,0 +1,17 @@
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\obj\Debug\net10.0\GoogleWalletClone.Infrastructure.csproj.AssemblyReference.cache
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\obj\Debug\net10.0\GoogleWalletClone.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\obj\Debug\net10.0\GoogleWalletClone.Infrastructure.AssemblyInfoInputs.cache
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\obj\Debug\net10.0\GoogleWalletClone.Infrastructure.AssemblyInfo.cs
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\obj\Debug\net10.0\GoogleWalletClone.Infrastructure.csproj.CoreCompileInputs.cache
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\bin\Debug\net10.0\GoogleWalletClone.Infrastructure.deps.json
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\bin\Debug\net10.0\GoogleWalletClone.Infrastructure.dll
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\bin\Debug\net10.0\GoogleWalletClone.Infrastructure.pdb
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\bin\Debug\net10.0\GoogleWalletClone.Application.dll
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\bin\Debug\net10.0\GoogleWalletClone.Domain.dll
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\bin\Debug\net10.0\GoogleWalletClone.Application.pdb
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\bin\Debug\net10.0\GoogleWalletClone.Domain.pdb
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\obj\Debug\net10.0\GoogleWa.7871F7DB.Up2Date
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\obj\Debug\net10.0\GoogleWalletClone.Infrastructure.dll
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\obj\Debug\net10.0\refint\GoogleWalletClone.Infrastructure.dll
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\obj\Debug\net10.0\GoogleWalletClone.Infrastructure.pdb
+C:\sources\google_wallet_clone\backend\GoogleWalletClone.Infrastructure\obj\Debug\net10.0\ref\GoogleWalletClone.Infrastructure.dll
