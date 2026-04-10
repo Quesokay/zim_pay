@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "2JyvdyNsKFE=",
+  "dgSpecHash": "+EjVWM3W7DE=",
   "success": true,
-  "projectFilePath": "c:\\sources\\zim_pay\\backend\\ZimPay.Domain\\ZimPay.Domain.csproj",
+  "projectFilePath": "C:\\sources\\zim_pay\\backend\\ZimPay.Domain\\ZimPay.Domain.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\moyov\\.nuget\\packages\\mediatr\\14.1.0\\mediatr.14.1.0.nupkg.sha512",
     "C:\\Users\\moyov\\.nuget\\packages\\mediatr.contracts\\2.0.1\\mediatr.contracts.2.0.1.nupkg.sha512",

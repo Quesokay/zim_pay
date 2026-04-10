@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "DXEaDoj2gU0=",
+  "dgSpecHash": "rR645QABMR8=",
   "success": true,
-  "projectFilePath": "c:\\sources\\zim_pay\\backend\\ZimPay.Presentation\\ZimPay.Presentation.csproj",
+  "projectFilePath": "C:\\sources\\zim_pay\\backend\\ZimPay.Presentation\\ZimPay.Presentation.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\moyov\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
     "C:\\Users\\moyov\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

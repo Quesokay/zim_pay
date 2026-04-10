@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ZimPay.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c18f7399449ae0bfa8b4d010799a22e762abb0bf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4a01e7ab461797dd49e6649246ab8a231dfec27c")]
 [assembly: System.Reflection.AssemblyProductAttribute("ZimPay.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ZimPay.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
