@@ -3,11 +3,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using GoogleWalletClone.Application.DTOs;
-using GoogleWalletClone.Application.Interfaces;
-using GoogleWalletClone.Application.Queries;
+using ZimPay.Application.DTOs;
+using ZimPay.Application.Interfaces;
+using ZimPay.Application.Queries;
 
-namespace GoogleWalletClone.Application.Handlers.QueryHandlers
+namespace ZimPay.Application.Handlers.QueryHandlers
 {
     public class GetTransactionsByUserIdQueryHandler : IRequestHandler<GetTransactionsByUserIdQuery, List<TransactionDto>>
     {
@@ -20,7 +20,7 @@ namespace GoogleWalletClone.Application.Handlers.QueryHandlers
 
         public async Task<List<TransactionDto>> Handle(GetTransactionsByUserIdQuery request, CancellationToken cancellationToken)
         {
-            IEnumerable<GoogleWalletClone.Domain.Transaction> transactions;
+            IEnumerable<ZimPay.Domain.Transaction> transactions;
 
             if (request.PageNumber.HasValue && request.PageSize.HasValue)
             {

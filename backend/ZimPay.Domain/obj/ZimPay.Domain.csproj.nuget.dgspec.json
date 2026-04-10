@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\sources\\zim_pay\\backend\\ZimPay.Domain\\ZimPay.Domain.csproj": {}
+    "c:\\sources\\zim_pay\\backend\\ZimPay.Domain\\ZimPay.Domain.csproj": {}
   },
   "projects": {
-    "C:\\sources\\zim_pay\\backend\\ZimPay.Domain\\ZimPay.Domain.csproj": {
+    "c:\\sources\\zim_pay\\backend\\ZimPay.Domain\\ZimPay.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\sources\\zim_pay\\backend\\ZimPay.Domain\\ZimPay.Domain.csproj",
+        "projectUniqueName": "c:\\sources\\zim_pay\\backend\\ZimPay.Domain\\ZimPay.Domain.csproj",
         "projectName": "ZimPay.Domain",
-        "projectPath": "C:\\sources\\zim_pay\\backend\\ZimPay.Domain\\ZimPay.Domain.csproj",
+        "projectPath": "c:\\sources\\zim_pay\\backend\\ZimPay.Domain\\ZimPay.Domain.csproj",
         "packagesPath": "C:\\Users\\moyov\\.nuget\\packages\\",
-        "outputPath": "C:\\sources\\zim_pay\\backend\\ZimPay.Domain\\obj\\",
+        "outputPath": "c:\\sources\\zim_pay\\backend\\ZimPay.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\moyov\\AppData\\Roaming\\NuGet\\NuGet.Config"

@@ -1,6 +1,0 @@
-@GoogleWalletClone.Presentation_HostAddress = http://localhost:5050
-
-GET {{GoogleWalletClone.Presentation_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
