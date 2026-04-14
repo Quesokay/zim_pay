@@ -25,12 +25,7 @@ class _PassesLoyaltyScreenState extends State<PassesLoyaltyScreen> {
   @override
   void initState() {
     super.initState();
-    final userState = context.read<UserBloc>().state;
-    if (userState is UserCreated) {
-      context.read<WalletBloc>().add(LoadWalletItems(userId: userState.user.id));
-    } else {
-      context.read<WalletBloc>().add(const LoadWalletItems(userId: 1));
-    }
+    context.read<WalletBloc>().add(LoadWalletItems());
   }
 
   @override

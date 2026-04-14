@@ -14,8 +14,10 @@ namespace ZimPay.Domain
         [MaxLength(50)]
         public string Type { get; set; } // "CreditCard", "DebitCard", "BankAccount"
         
-        [MaxLength(20)]
-        public string CardNumber { get; set; } = string.Empty; // Last 4 digits and masked
+        public string CardNumber { get; set; } // We will now ensure this only holds "•••• 1234"
+
+        [MaxLength(500)]
+        public string DigitalToken { get; set; } // Store the JWT here
         
         [MaxLength(100)]
         public string BankName { get; set; } = string.Empty;

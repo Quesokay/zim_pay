@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../blocs/wallet/wallet_bloc.dart';
 import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
-import '../blocs/user/user_bloc.dart';
 import '../models/wallet_item.dart';
 import 'add_to_wallet_screen.dart';
 import 'card_details_screen.dart';
@@ -40,13 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
 
-    final userState = context.read<UserBloc>().state;
-    if (userState is UserCreated) {
-      context.read<WalletBloc>().add(LoadWalletItems(userId: userState.user.id));
-    } else {
-      // Fallback for development if no user is logged in
-      context.read<WalletBloc>().add(const LoadWalletItems(userId: 1));
-    }
+    context.read<WalletBloc>().add(LoadWalletItems());
   }
 
   @override
@@ -70,9 +63,9 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBody: true,
       body: BlocBuilder<WalletBloc, WalletState>(
         builder: (context, state) {
-          print('HomeScreen: BlocBuilder state status: ${state.status}');
-          print('HomeScreen: Wallet items: ${state.walletItems.length}');
-          print('HomeScreen: Loyalty cards: ${state.loyaltyCards.length}');
+          debugPrint('HomeScreen: BlocBuilder state status: ${state.status}');
+          debugPrint('HomeScreen: Wallet items: ${state.walletItems.length}');
+          debugPrint('HomeScreen: Loyalty cards: ${state.loyaltyCards.length}');
 
           if (state.status == WalletStatus.loading) {
             return const Center(child: CircularProgressIndicator());

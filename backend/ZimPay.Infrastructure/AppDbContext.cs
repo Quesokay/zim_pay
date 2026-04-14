@@ -99,6 +99,7 @@ namespace ZimPay.Infrastructure
                     Type = "CreditCard",
                     BankName = "Bank of Future",
                     CardNumber = "8892",
+                    DigitalToken = "seeded_dummy_jwt_token_for_testing",
                     ExpiryDate = "12/28",
                     IsDefault = true,
                     IsActive = true,

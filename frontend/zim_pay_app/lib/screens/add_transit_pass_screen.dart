@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../blocs/wallet/wallet_bloc.dart';
 import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
-import '../blocs/user/user_bloc.dart';
+import '../models/create_pass_dto.dart';
 
 import 'package:flutter/services.dart';
 
@@ -137,20 +137,24 @@ class _AddTransitPassScreenState extends State<AddTransitPassScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        final userState = context.read<UserBloc>().state;
-                        final userId = (userState is UserCreated) ? userState.user.id : 1;
-                        
+                        final passDto = CreatePassDto(
+                          type: "TransitPass",
+                          title: _titleController.text,
+                          details: "Transit Pass",
+                          issuerId: "ZimPay",
+                          issuerName: "ZimPay Transit",
+                          passNumber: DateTime.now().millisecondsSinceEpoch.toString(),
+                          barcode: "TR-${DateTime.now().millisecondsSinceEpoch}",
+                          balance: double.tryParse(_balanceController.text) ?? 0.0,
+                          color: "#006A2B",
+                        );
+
                         context.read<WalletBloc>().add(
-                              AddWalletItem(
-                                userId: userId,
-                                isPass: true,
-                                itemData: {
-                                  'title': _titleController.text,
-                                  'balance': double.tryParse(_balanceController.text) ?? 0.0,
-                                  'type': 'TransitPass',
-                                },
-                              ),
-                            );
+                          AddPass(
+                            userId: 1, // Hardcoded for dev
+                            passDetails: passDto,
+                          ),
+                        );
                       }
                     },
                     style: ElevatedButton.styleFrom(

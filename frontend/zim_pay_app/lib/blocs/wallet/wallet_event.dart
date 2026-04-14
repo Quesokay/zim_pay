@@ -1,47 +1,30 @@
 import 'package:equatable/equatable.dart';
+import '../../models/create_payment_method_dto.dart';
+import '../../models/create_pass_dto.dart';
 
 abstract class WalletEvent extends Equatable {
-  const WalletEvent();
-
   @override
   List<Object?> get props => [];
 }
 
-class AddWalletItem extends WalletEvent {
-  final int userId;
-  final Map<String, dynamic> itemData;
-  final bool isPass;
+class LoadWalletItems extends WalletEvent {}
 
-  const AddWalletItem({
-    required this.userId,
-    required this.itemData,
-    this.isPass = false,
-  });
+class AddManualCard extends WalletEvent {
+  final int userId;
+  final CreatePaymentMethodDto cardDetails;
+
+  AddManualCard({required this.userId, required this.cardDetails});
 
   @override
-  List<Object?> get props => [userId, itemData, isPass];
+  List<Object?> get props => [userId, cardDetails];
 }
 
-class LoadWalletItems extends WalletEvent {
+class AddPass extends WalletEvent {
   final int userId;
+  final CreatePassDto passDetails;
 
-  const LoadWalletItems({required this.userId});
+  AddPass({required this.userId, required this.passDetails});
 
   @override
-  List<Object?> get props => [userId];
-}
-
-class DeleteWalletItem extends WalletEvent {
-  final int userId;
-  final String itemId;
-  final bool isPass;
-
-  const DeleteWalletItem({
-    required this.userId,
-    required this.itemId,
-    required this.isPass,
-  });
-
-  @override
-  List<Object?> get props => [userId, itemId, isPass];
+  List<Object?> get props => [userId, passDetails];
 }

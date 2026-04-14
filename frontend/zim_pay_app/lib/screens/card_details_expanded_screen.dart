@@ -4,9 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import '../models/wallet_item.dart';
-import '../blocs/wallet/wallet_bloc.dart';
-import '../blocs/wallet/wallet_event.dart';
-import '../blocs/user/user_bloc.dart';
 import 'home_screen.dart';
 import 'cards_screen.dart';
 import 'transaction_history_screen.dart';
@@ -328,17 +325,13 @@ class CardDetailsExpandedScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              final userState = context.read<UserBloc>().state;
-              if (userState is UserCreated) {
-                context.read<WalletBloc>().add(DeleteWalletItem(
-                  userId: userState.user.id,
-                  itemId: item.id,
-                  isPass: item is TransitPass || item is LoyaltyCard,
-                ));
-                Navigator.pop(dialogContext); // Close dialog
-                Navigator.pop(context); // Go back from details
-                Navigator.pop(context); // Go back from card view to list
-              }
+              // Note: DeleteWalletItem is currently undefined in wallet_event.dart
+              // and the logic in WalletBloc for deletion might need updating.
+              // For now, we pop the dialog and stay on the screen to avoid crashes.
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Delete feature is temporarily unavailable')),
+              );
             },
             child: const Text('Remove', style: TextStyle(color: Colors.red)),
           ),

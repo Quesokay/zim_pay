@@ -177,7 +177,11 @@ namespace ZimPay.Infrastructure.Migrations
 
                     b.Property<string>("CardNumber")
                         .IsRequired()
-                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DigitalToken")
+                        .IsRequired()
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ExpiryDate")
@@ -220,6 +224,7 @@ namespace ZimPay.Infrastructure.Migrations
                             AddedAt = new DateTime(2024, 10, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             BankName = "Bank of Future",
                             CardNumber = "8892",
+                            DigitalToken = "seeded_dummy_jwt_token_for_testing",
                             ExpiryDate = "12/28",
                             HolderName = "",
                             IsActive = true,

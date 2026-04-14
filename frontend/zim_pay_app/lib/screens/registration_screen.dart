@@ -32,8 +32,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     const backgroundColor = Color(0xFFF8FAFC);
     const surfaceColor = Color(0xFFFFFFFF);
     const onSurfaceVariantColor = Color(0xFF475569);
-    const slate50 = Color(0xFFF8FAFC);
-    const slate200 = Color(0xFFE2E8F0);
     const slate600 = Color(0xFF475569);
 
     return Scaffold(
@@ -242,8 +240,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }) {
     const primaryColor = Color(0xFF0058BA);
     const onSurfaceVariantColor = Color(0xFF475569);
-    const slate50 = Color(0xFFF8FAFC);
-    const slate200 = Color(0xFFE2E8F0);
 
     return TextFormField(
       controller: controller,
@@ -265,14 +261,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           fontWeight: FontWeight.w600,
         ),
         filled: true,
-        fillColor: slate50,
+        fillColor: const Color(0xFFF8FAFC),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 16,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: slate200),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

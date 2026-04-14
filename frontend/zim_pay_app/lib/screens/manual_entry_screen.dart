@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,10 +7,15 @@ import 'package:google_fonts/google_fonts.dart';
 import '../blocs/wallet/wallet_bloc.dart';
 import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
-import '../blocs/user/user_bloc.dart';
+import '../models/create_payment_method_dto.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:zim_pay_app/screens/link_tag_screen.dart';
 
 class ManualEntryScreen extends StatefulWidget {
-  const ManualEntryScreen({super.key});
+  // ADDED: Accept initial data from the Card Scanner
+  final Map<String, String>? initialData;
+
+  const ManualEntryScreen({super.key, this.initialData});
 
   @override
   State<ManualEntryScreen> createState() => _ManualEntryScreenState();
@@ -21,6 +27,38 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   final _expiryController = TextEditingController();
   final _cvvController = TextEditingController();
   final _holderController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ADDED: Pre-fill the form if data was passed from the scanner
+    if (widget.initialData != null) {
+      String rawCard = widget.initialData!['cardNumber'] ?? '';
+
+      // Programmatically format the scanned 16 digits to include spaces
+      String formattedCard = '';
+      for (int i = 0; i < rawCard.length; i++) {
+        formattedCard += rawCard[i];
+        if ((i + 1) % 4 == 0 && i != rawCard.length - 1) {
+          formattedCard += ' ';
+        }
+      }
+
+      _cardNumberController.text = formattedCard;
+      _expiryController.text = widget.initialData!['expiryDate'] ?? '';
+    }
+  }
+
+  void _handleSuccessfulVerification(CreatePaymentMethodDto cardDto) {
+    if (mounted) {
+      // Close the OTP Dialog
+      Navigator.of(context, rootNavigator: true).pop();
+
+      debugPrint('🚀 [UI] Dispatching AddManualCard event to WalletBloc...');
+      _saveCardToBackend(cardDto);
+    }
+  }
 
   @override
   void dispose() {
@@ -66,17 +104,31 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         ),
       ),
       body: BlocListener<WalletBloc, WalletState>(
+        listenWhen: (previous, current) => previous.status == WalletStatus.loading && current.status == WalletStatus.success,
         listener: (context, state) {
+          Navigator.pop(context);
           if (state.status == WalletStatus.success) {
+            // 1. Close the manual entry screen
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Card added successfully')),
+
+            // 2. Navigate to the NFC Writer screen with a test token
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const LinkTagScreen(
+                  digitalToken: "TEST_SECURE_TOKEN_12345", // We will use the real .NET token later!
+                ),
+              ),
             );
           } else if (state.status == WalletStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to add card')),
-            );
+            // Show error snackbar
           }
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   const SnackBar(
+          //     content: Text('Card added successfully'),
+          //     backgroundColor: Colors.green,
+          //   ),
+          // );
         },
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -188,35 +240,20 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      print('ManualEntryScreen: Save Card button pressed');
                       if (_formKey.currentState!.validate()) {
-                        print('ManualEntryScreen: Form validated');
-                        final userBloc = context.read<UserBloc>();
-                        final walletBloc = context.read<WalletBloc>();
-                        final userState = userBloc.state;
-                        
-                        int userId = 1; // Default for dev
-                        if (userState is UserCreated) {
-                          userId = userState.user.id;
-                          print('ManualEntryScreen: Using user ID from state: $userId');
-                        } else {
-                          print('ManualEntryScreen: User not logged in, using default ID: $userId');
-                        }
-                        
-                        debugPrint('ManualEntryScreen: Dispatching AddWalletItem event');
-                        walletBloc.add(
-                          AddWalletItem(
-                            userId: userId,
-                            itemData: {
-                              'cardNumber': _cardNumberController.text,
-                              'expiryDate': _expiryController.text,
-                              'cvv': _cvvController.text,
-                              'cardHolderName': _holderController.text,
-                            },
-                          ),
+                        // 1. Create the DTO
+                        final cardDto = CreatePaymentMethodDto(
+                          cardNumber: _cardNumberController.text.replaceAll(' ', ''),
+                          expiryDate: _expiryController.text,
+                          cvv: _cvvController.text,
+                          cardHolderName: _holderController.text,
                         );
-                      } else {
-                        debugPrint('ManualEntryScreen: Form validation failed');
+
+                        // 2. Trigger SMS Verification instead of saving directly!
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Contacting bank for verification...')),
+                        );
+                        _startPhoneVerification(cardDto);
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -256,6 +293,115 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // 1. The Phone Auth Flow
+  Future<void> _startPhoneVerification(CreatePaymentMethodDto cardDto) async {
+    // For a capstone, you can hardcode a test number here, or pass in the logged-in user's actual phone number.
+    const testPhoneNumber = '+15555555555';
+    await FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true);
+
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: testPhoneNumber,
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        // Auto-resolution (usually only works on Android)
+        await FirebaseAuth.instance.signInWithCredential(credential);
+        if (mounted) {
+          _saveCardToBackend(cardDto);
+        }
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Verification Failed: ${e.message}')),
+          );
+        }
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        // SMS was sent! Show the dialog to type the code.
+        if (mounted) {
+          _showOTPDialog(verificationId, cardDto);
+        }
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {},
+    );
+  }
+
+  // 2. The Pop-Up Dialog for the 6-digit code
+  void _showOTPDialog(String verificationId, CreatePaymentMethodDto cardDto) {
+    final otpController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text('Enter Bank OTP', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('We sent a 6-digit code to your registered phone number to verify this card.', style: GoogleFonts.inter()),
+            const SizedBox(height: 16),
+            TextField(
+              controller: otpController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              decoration: const InputDecoration(
+                hintText: '123456',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                debugPrint('🔥 [UI] Verifying OTP code with Firebase...');
+
+                PhoneAuthCredential credential = PhoneAuthProvider.credential(
+                  verificationId: verificationId,
+                  smsCode: otpController.text,
+                );
+
+                // 1. Attempt the sign in
+                await FirebaseAuth.instance.signInWithCredential(credential);
+
+                debugPrint('✅ [UI] Firebase verification SUCCESS!');
+                _handleSuccessfulVerification(cardDto);
+
+              } catch (e) {
+                // 2. CHECK FOR THE PIGEON BUG:
+                // If it's a type cast error but current user is NOT null, it actually worked!
+                if (e.toString().contains('PigeonUserDetails') &&
+                    FirebaseAuth.instance.currentUser != null) {
+
+                  debugPrint('⚠️ [UI] Caught Pigeon type-cast bug, but User exists. Proceeding...');
+                  _handleSuccessfulVerification(cardDto);
+
+                } else {
+                  debugPrint('❌ [UI] Firebase verification FAILED: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid Code. Please try again.')),
+                  );
+                }
+              }
+            },
+            child: const Text('Verify & Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. The actual save function (extracted from your old button logic)
+  void _saveCardToBackend(CreatePaymentMethodDto cardDto) {
+    context.read<WalletBloc>().add(
+        AddManualCard(userId: 1, cardDetails: cardDto)
     );
   }
 

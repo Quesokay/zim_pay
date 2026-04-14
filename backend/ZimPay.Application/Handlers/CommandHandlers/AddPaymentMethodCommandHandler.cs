@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using Microsoft.Extensions.Logging; // ADDED LOGGER
 using ZimPay.Application.Commands;
 using ZimPay.Application.Interfaces;
 using ZimPay.Domain;
@@ -12,27 +13,38 @@ namespace ZimPay.Application.Handlers.CommandHandlers
     {
         private readonly IPaymentMethodRepository _paymentMethodRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ITokenizationService _tokenService;
+        private readonly ILogger<AddPaymentMethodCommandHandler> _logger; // ADDED LOGGER
 
         public AddPaymentMethodCommandHandler(
             IPaymentMethodRepository paymentMethodRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            ITokenizationService tokenService,
+            ILogger<AddPaymentMethodCommandHandler> logger) // INJECTED LOGGER
         {
             _paymentMethodRepository = paymentMethodRepository;
             _userRepository = userRepository;
+            _tokenService = tokenService;
+            _logger = logger;
         }
 
         public async Task<int> Handle(AddPaymentMethodCommand request, CancellationToken cancellationToken)
         {
-            // Verify user exists
+            _logger.LogInformation("🚀 [BACKEND] Received AddPaymentMethod request for User ID: {UserId}", request.UserId);
+
             var userExists = await _userRepository.ExistsAsync(request.UserId);
             if (!userExists)
+            {
+                _logger.LogWarning("❌ [BACKEND] User ID {UserId} was not found in the database. Aborting.", request.UserId);
                 throw new InvalidOperationException($"User with ID {request.UserId} not found.");
+            }
 
-            // Mask card number: keep only last 4 digits for storage
             string fullNumber = (request.PaymentMethod.CardNumber ?? "").Replace(" ", "");
             string maskedCardNumber = fullNumber.Length >= 4
-                ? fullNumber.Substring(fullNumber.Length - 4)
+                ? $"•••• {fullNumber.Substring(fullNumber.Length - 4)}"
                 : fullNumber;
+
+            _logger.LogInformation("💳 [BACKEND] Masked card number generated: {MaskedCard}", maskedCardNumber);
 
             var paymentMethod = new ZimPay.Domain.PaymentMethod
             {
@@ -45,19 +57,17 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                 ExpiryDate = request.PaymentMethod.ExpiryDate,
                 IsDefault = request.PaymentMethod.IsDefault,
                 IsActive = true,
-                AddedAt = DateTime.UtcNow
+                AddedAt = DateTime.UtcNow,
+                DigitalToken = "PENDING_GENERATION"
             };
 
-            // Handle default card logic
             var existingMethods = await _paymentMethodRepository.GetByUserIdAsync(request.UserId);
             if (!System.Linq.Enumerable.Any(existingMethods))
             {
-                // First card is always default
                 paymentMethod.IsDefault = true;
             }
             else if (paymentMethod.IsDefault)
             {
-                // If new card is default, unmark previous default
                 foreach (var existing in existingMethods)
                 {
                     if (existing.IsDefault)
@@ -68,7 +78,16 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                 }
             }
 
+            _logger.LogInformation("💾 [BACKEND] Saving preliminary record to SQLite database...");
             await _paymentMethodRepository.AddAsync(paymentMethod);
+
+            _logger.LogInformation("🔐 [BACKEND] Generating JWT Digital Token for NFC usage...");
+            paymentMethod.DigitalToken = _tokenService.GenerateDigitalToken(paymentMethod, fullNumber);
+            
+            await _paymentMethodRepository.UpdateAsync(paymentMethod);
+
+            _logger.LogInformation("✅ [BACKEND] SUCCESS! Payment Method {MethodId} saved with Digital Token attached.", paymentMethod.Id);
+
             return paymentMethod.Id;
         }
     }

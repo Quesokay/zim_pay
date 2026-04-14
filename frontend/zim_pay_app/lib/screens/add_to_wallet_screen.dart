@@ -129,11 +129,24 @@ class AddToWalletScreen extends StatelessWidget {
                   delegate: SliverChildListDelegate([
                     // Scan Card Section
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
+                      onTap: () async {
+                        // 1. Open the scanner and wait for a result
+                        final scannedData = await Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const CardScannerScreen()),
                         );
+
+                        // 2. If we got data back, pass it to the Manual Entry screen
+                        if (scannedData != null && context.mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ManualEntryScreen(
+                                initialData: scannedData as Map<String, String>,
+                              ),
+                            ),
+                          );
+                        }
                       },
                       child: Container(
                         decoration: BoxDecoration(

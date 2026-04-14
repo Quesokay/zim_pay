@@ -6,6 +6,7 @@ import '../blocs/wallet/wallet_bloc.dart';
 import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
 import '../blocs/user/user_bloc.dart';
+import '../models/create_payment_method_dto.dart';
 
 class AddLoyaltyScreen extends StatefulWidget {
   final String initialTitle;
@@ -144,18 +145,18 @@ class _AddLoyaltyScreenState extends State<AddLoyaltyScreen> {
                       if (_formKey.currentState!.validate()) {
                         final userState = context.read<UserBloc>().state;
                         final userId = (userState is UserCreated) ? userState.user.id : 1;
-                        
+
                         context.read<WalletBloc>().add(
-                              AddWalletItem(
-                                userId: userId,
-                                isPass: true,
-                                itemData: {
-                                  'title': _titleController.text,
-                                  'details': _detailsController.text,
-                                  'type': 'Loyalty',
-                                },
-                              ),
-                            );
+                          AddManualCard(
+                            userId: userId,
+                            cardDetails: CreatePaymentMethodDto(
+                              cardNumber: '', // Not used for loyalty
+                              expiryDate: '', // Not used for loyalty
+                              cvv: '', // Not used for loyalty
+                              cardHolderName: _titleController.text,
+                            ),
+                          ),
+                        );
                       }
                     },
                     style: ElevatedButton.styleFrom(
