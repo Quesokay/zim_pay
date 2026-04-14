@@ -30,5 +30,18 @@ namespace ZimPay.Presentation.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpPost("process")]
+        public async Task<IActionResult> Process([FromBody] ProcessTransactionCommand command)
+        {
+            var success = await _mediator.Send(command);
+
+            if (success)
+            {
+                return Ok(new { message = "Payment Approved" });
+            }
+            
+            return BadRequest(new { message = "Payment Declined: Invalid Card" });
+        }
     }
 }

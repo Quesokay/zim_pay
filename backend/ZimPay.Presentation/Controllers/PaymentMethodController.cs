@@ -22,8 +22,11 @@ namespace ZimPay.Presentation.Controllers
         {
             try
             {
-                var paymentMethodId = await _mediator.Send(command);
-                return Ok(ApiResponse<int>.SuccessResponse(paymentMethodId, "Payment method added successfully"));
+                // The mediator now returns the DigitalToken (string) instead of the ID
+                var generatedToken = await _mediator.Send(command);
+                
+                // Return the token using your custom ApiResponse wrapper
+                return Ok(ApiResponse<string>.SuccessResponse(generatedToken, "Payment method added successfully"));
             }
             catch (System.InvalidOperationException ex)
             {

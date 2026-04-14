@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert'; // Required for utf8 decoding
+import 'package:http/http.dart' as http;
+import '../constants.dart';
 
 class MerchantPosScreen extends StatefulWidget {
   const MerchantPosScreen({super.key});
@@ -84,13 +86,26 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
     }
   }
 
-  void _processPayment(String secureToken, String amount) {
-    // TODO: Dispatch a BLoC event here to send the Token + Amount to your .NET backend!
+  Future<void> _processPayment(String secureToken, String amount) async {
     debugPrint('💰 [POS] Attempting to charge \$$amount using Token: $secureToken');
 
-    // Simulating network delay for the UI
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
+    // Use the base URL from constants, but point to the Transaction endpoint
+    final url = Uri.parse('${ApiConstants.baseUrl}/Transaction/process');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'DigitalToken': secureToken,
+          'Amount': double.parse(amount), // Convert string to number
+        }),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        // SUCCESS!
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -99,7 +114,7 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context);
                   setState(() {
                     _amountController.clear();
                     _statusMessage = 'Enter amount and press "Ready to Charge"';
@@ -110,8 +125,13 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
             ],
           ),
         );
+      } else {
+        // DECLINED OR FAILED
+        _handleError('Payment Declined by Bank.');
       }
-    });
+    } catch (e) {
+      _handleError('Network error connecting to payment server.');
+    }
   }
 
   @override
