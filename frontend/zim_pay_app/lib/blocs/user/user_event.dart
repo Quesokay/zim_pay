@@ -5,6 +5,15 @@ abstract class UserEvent extends Equatable {
   List<Object> get props => [];
 }
 
+class LoginEvent extends UserEvent {
+  final String email;
+
+  LoginEvent(this.email);
+
+  @override
+  List<Object> get props => [email];
+}
+
 class CreateUserEvent extends UserEvent {
   final String email;
   final String name;
@@ -14,4 +23,26 @@ class CreateUserEvent extends UserEvent {
 
   @override
   List<Object> get props => [email, name, phone];
+}
+
+class UpdateUserEvent extends UserEvent {
+  final String? name;
+  final String? phone;
+  final bool? fingerprintEnabled;
+  final bool? contactlessEnabled;
+
+  UpdateUserEvent({
+    this.name,
+    this.phone,
+    this.fingerprintEnabled,
+    this.contactlessEnabled,
+  });
+
+  @override
+  List<Object> get props => [
+        name ?? '',
+        phone ?? '',
+        fingerprintEnabled ?? '',
+        contactlessEnabled ?? '',
+      ];
 }

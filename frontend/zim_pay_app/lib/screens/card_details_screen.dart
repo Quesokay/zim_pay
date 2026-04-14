@@ -1,15 +1,19 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:barcode_widget/barcode_widget.dart';
+import '../models/wallet_item.dart';
+import '../blocs/user/user_bloc.dart';
 import 'card_details_expanded_screen.dart';
-import 'transactions_screen.dart';
 import 'home_screen.dart';
 import 'transaction_history_screen.dart';
 import 'cards_screen.dart';
 import 'settings_screen.dart';
 
 class CardDetailsScreen extends StatefulWidget {
-  const CardDetailsScreen({super.key});
+  final WalletItem item;
+  const CardDetailsScreen({super.key, required this.item});
 
   @override
   State<CardDetailsScreen> createState() => _CardDetailsScreenState();
@@ -71,29 +75,17 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                   ),
                 ),
                 title: Text(
-                  'Card Details',
+                  widget.item is CreditCard
+                      ? 'Card Details'
+                      : widget.item is TransitPass
+                          ? 'Pass Details'
+                          : 'Loyalty Details',
                   style: GoogleFonts.plusJakartaSans(
                     color: onSurfaceColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                   ),
                 ),
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        image: DecorationImage(
-                          image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuBlWht8DGoSIVyoaKPjQ5VRMHzgXZ5LzFe3HJWy82gqk5_T9Jr2OhZINSUdVOmiVwf5vvEZJbCZYbrp68P9bzD-IU9V0SkLq4yt4r5jQCzTUxVYZrnuyDhPRqf30A56ggjsfNtDnjkw99Y5rQ5XOtxofNAbzFbz0LPBBzhCStG_Q8G0zUXq9SghHZ5iFXaD37ci0IR7IrQhYEDacxtCGcL_rvH9kFUDk3QDOrO-iGiy9OLt7QC0Eihz_6wAEc_2SF5M-doWx7iXtoFV'),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ),
 
               SliverPadding(
@@ -101,61 +93,148 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // NFC Contactless Indicator
-                    Center(
-                      child: Column(
-                        children: [
-                          Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              ScaleTransition(
-                                scale: Tween(begin: 1.0, end: 1.5).animate(
-                                  CurvedAnimation(parent: _nfcController, curve: Curves.easeOut),
-                                ),
-                                child: FadeTransition(
-                                  opacity: Tween(begin: 0.5, end: 0.0).animate(
-                                    CurvedAnimation(parent: _nfcController, curve: Curves.easeOut),
-                                  ),
-                                  child: Container(
-                                    width: 64,
-                                    height: 64,
+                    if (widget.item is! LoyaltyCard)
+                      BlocBuilder<UserBloc, UserState>(
+                        builder: (context, userState) {
+                          final bool contactlessEnabled = userState is UserCreated ? userState.user.contactlessEnabled : true;
+
+                          if (!contactlessEnabled) {
+                            return Center(
+                              child: Column(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: primaryColor.withValues(alpha: 0.1),
+                                      color: Colors.red.withValues(alpha: 0.1),
+                                    ),
+                                    child: const Icon(
+                                      Icons.not_interested,
+                                      color: Colors.red,
+                                      size: 40,
                                     ),
                                   ),
-                                ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'CONTACTLESS DISABLED',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.red,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 2.0,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: surfaceContainerLowColor,
+                            );
+                          }
+
+                          return Center(
+                            child: Column(
+                              children: [
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    ScaleTransition(
+                                      scale: Tween(begin: 1.0, end: 1.5).animate(
+                                        CurvedAnimation(parent: _nfcController, curve: Curves.easeOut),
+                                      ),
+                                      child: FadeTransition(
+                                        opacity: Tween(begin: 0.5, end: 0.0).animate(
+                                          CurvedAnimation(parent: _nfcController, curve: Curves.easeOut),
+                                        ),
+                                        child: Container(
+                                          width: 64,
+                                          height: 64,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: primaryColor.withValues(alpha: 0.1),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: surfaceContainerLowColor,
+                                      ),
+                                      child: const Icon(
+                                        Icons.contactless,
+                                        color: primaryColor,
+                                        size: 40,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(
-                                  Icons.contactless,
-                                  color: primaryColor,
-                                  size: 40,
+                                const SizedBox(height: 16),
+                                Text(
+                                  'HOLD TO READER',
+                                  style: GoogleFonts.inter(
+                                    color: primaryColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 2.0,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'HOLD TO READER',
-                            style: GoogleFonts.inter(
-                              color: primaryColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 2.0,
+                              ],
                             ),
-                          ),
-                        ],
+                          );
+                        },
+                      )
+                    else
+                      Center(
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: BarcodeWidget(
+                                barcode: Barcode.code128(),
+                                data: (widget.item as LoyaltyCard).id.toString().padLeft(12, '0'),
+                                width: 250,
+                                height: 100,
+                                drawText: true,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: onSurfaceColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              'SHOW BARCODE TO SCAN',
+                              style: GoogleFonts.inter(
+                                color: onSurfaceVariantColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2.0,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 32),
 
-                    // Premium Visa Card
-                    _buildInfiniteObsidianCard(),
+                    // Card Display
+                    if (widget.item is CreditCard)
+                      _buildCreditCard(widget.item as CreditCard)
+                    else if (widget.item is TransitPass)
+                      _buildTransitPass(widget.item as TransitPass)
+                    else if (widget.item is LoyaltyCard)
+                      _buildLoyaltyCardDisplay(widget.item as LoyaltyCard),
+                    
                     const SizedBox(height: 32),
 
                     // Quick Actions
@@ -170,7 +249,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const CardDetailsExpandedScreen()),
+                                MaterialPageRoute(builder: (context) => CardDetailsExpandedScreen(item: widget.item)),
                               );
                             },
                           ),
@@ -183,10 +262,10 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                             surfaceContainerHighColor,
                             primaryColor,
                             onTap: () {
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                              );
                             },
                           ),
                         ),
@@ -194,7 +273,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                     ),
                     const SizedBox(height: 48),
 
-                    // Recent Activity
+                    // Recent Activity (Static for now or wire to transaction bloc filtered by card)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -210,7 +289,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const TransactionsScreen()),
+                              MaterialPageRoute(builder: (context) => const TransactionHistoryScreen()),
                             );
                           },
                           child: Text(
@@ -263,29 +342,6 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                             secondaryColor,
                             isAlternate: true,
                           ),
-                          _buildTransactionItem(
-                            Icons.train_outlined,
-                            'MTA Transit',
-                            'Oct 22 • 5:30 PM',
-                            '-\$2.90',
-                            'Completed',
-                            surfaceContainerHighestColor,
-                            onSurfaceColor,
-                            onSurfaceVariantColor,
-                            secondaryColor,
-                          ),
-                          _buildTransactionItem(
-                            Icons.restaurant_outlined,
-                            'Sweet-green',
-                            'Oct 22 • 12:15 PM',
-                            '-\$18.42',
-                            'Completed',
-                            surfaceContainerHighestColor,
-                            onSurfaceColor,
-                            onSurfaceVariantColor,
-                            secondaryColor,
-                            isAlternate: true,
-                          ),
                         ],
                       ),
                     ),
@@ -318,7 +374,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Your card number is replaced with a unique digital identifier, so your actual details are never shared with merchants.',
+                                  'Your details are replaced with a unique digital identifier, so your actual data is never shared. Zim Pay keeps you safe.',
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     color: onSurfaceVariantColor,
@@ -399,18 +455,18 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
     );
   }
 
-  Widget _buildInfiniteObsidianCard() {
+  Widget _buildCreditCard(CreditCard card) {
     return AspectRatio(
       aspectRatio: 1.586,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF0F172A),
-              Color(0xFF1E293B),
+              card.primaryColor,
+              card.secondaryColor,
               Colors.black,
             ],
           ),
@@ -421,7 +477,6 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
               offset: const Offset(0, 15),
             ),
           ],
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         padding: const EdgeInsets.all(32),
         child: Column(
@@ -445,7 +500,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                         ),
                       ),
                       Text(
-                        'Infinite Obsidian',
+                        card.bankName,
                         style: GoogleFonts.plusJakartaSans(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -479,7 +534,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      '•••• •••• •••• 8842',
+                      card.cardNumber,
                       style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontSize: 20,
@@ -493,33 +548,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'CARD HOLDER',
-                        style: GoogleFonts.inter(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 10,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      Text(
-                        'ALEXANDER R. VANCE',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          letterSpacing: 1.0,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
+                const Spacer(),
                 Text(
                   'VISA',
                   style: GoogleFonts.inter(
@@ -537,9 +566,162 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
     );
   }
 
+  Widget _buildTransitPass(TransitPass pass) {
+    return AspectRatio(
+      aspectRatio: 1.586,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              pass.primaryColor,
+              pass.secondaryColor,
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'TRANSIT PASS',
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const Icon(Icons.train, color: Colors.white, size: 28),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  pass.title,
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Balance: ${pass.balance}',
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(Icons.contactless, color: Colors.white, size: 32),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoyaltyCardDisplay(LoyaltyCard card) {
+    return AspectRatio(
+      aspectRatio: 1.586,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              card.iconColor,
+              card.iconColor.withValues(alpha: 0.7),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'LOYALTY CARD',
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                Icon(card.icon, color: Colors.white, size: 28),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  card.title,
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  card.subtitle,
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(Icons.qr_code_2, color: Colors.white, size: 32),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildActionButton(IconData icon, String label, Color bgColor, Color textColor, {VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(

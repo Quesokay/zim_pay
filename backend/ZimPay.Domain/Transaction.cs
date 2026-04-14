@@ -34,5 +34,6 @@ namespace ZimPay.Domain
         // Navigation properties
         public User User { get; set; }
         public User Recipient { get; set; }
+        public PaymentMethod PaymentMethod { get; set; }
     }
 }

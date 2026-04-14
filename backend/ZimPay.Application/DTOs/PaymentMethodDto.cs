@@ -16,6 +16,7 @@ namespace ZimPay.Application.DTOs
         public bool IsActive { get; set; }
         public DateTime AddedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public string DigitalToken { get; set; }
     }
 
     public class CreatePaymentMethodDto

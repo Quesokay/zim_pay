@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace GoogleWalletClone.Infrastructure.Migrations
+namespace ZimPay.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class EnhancedSchema : Migration
@@ -217,3 +217,4 @@ namespace GoogleWalletClone.Infrastructure.Migrations
         }
     }
 }
+

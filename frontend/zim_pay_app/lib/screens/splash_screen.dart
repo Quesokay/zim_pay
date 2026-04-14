@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
+import '../repositories/health_repository.dart';
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,11 +15,18 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late List<AnimationController> _controllers;
   late List<Animation<double>> _animations;
+  String _statusMessage = 'Securing your digital assets...';
+  bool _isBackendReachable = false;
+  bool _isChecking = false;
 
   @override
   void initState() {
     super.initState();
+    _initAnimations();
+    _checkConnectivity();
+  }
 
+  void _initAnimations() {
     _controllers = List.generate(4, (index) {
       return AnimationController(
         duration: const Duration(milliseconds: 1500),
@@ -46,15 +55,39 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         }
       });
     }
+  }
 
-    // Navigate to Home after some time
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
+  Future<void> _checkConnectivity() async {
+    if (_isChecking) return;
+    
+    setState(() {
+      _isChecking = true;
+      _statusMessage = 'Connecting to Zim Pay services...';
     });
+    
+    final healthRepository = context.read<HealthRepository>();
+    final stopwatch = Stopwatch()..start();
+    
+    _isBackendReachable = await healthRepository.checkHealth();
+    stopwatch.stop();
+
+    if (mounted) {
+      setState(() => _isChecking = false);
+      if (_isBackendReachable) {
+        setState(() => _statusMessage = 'Connection established');
+        // Ensure splash shows for at least 2 seconds if connection is fast
+        final remainingDelay = 2000 - stopwatch.elapsedMilliseconds;
+        Future.delayed(Duration(milliseconds: remainingDelay > 0 ? remainingDelay : 500), () {
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }
+        });
+      } else {
+        setState(() => _statusMessage = 'Backend unreachable.');
+      }
+    }
   }
 
   @override
@@ -157,7 +190,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 const SizedBox(height: 32),
                 // Typography
                 Text(
-                  'Google Wallet',
+                  'Zim Pay',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 32,
                     fontWeight: FontWeight.w800,
@@ -203,16 +236,47 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   const SizedBox(height: 24),
                   // Contextual Status
                   Opacity(
-                    opacity: 0.6,
+                    opacity: 0.8,
                     child: Text(
-                      'Securing your digital assets...',
+                      _statusMessage,
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: onSurfaceVariantColor,
+                        color: _isBackendReachable ? onSurfaceVariantColor : tertiaryColor,
                       ),
                     ),
                   ),
+                  if (!_isBackendReachable && !_isChecking) ...[
+                    const SizedBox(height: 24),
+                    OutlinedButton.icon(
+                      onPressed: _checkConnectivity,
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('Retry Connection'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: primaryColor,
+                        side: const BorderSide(color: primaryColor, width: 1.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (context) => const HomeScreen()),
+                        );
+                      },
+                      child: Text(
+                        'Proceed Offline',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: onSurfaceVariantColor,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'home_screen.dart';
 import 'cards_screen.dart';
+import 'add_loyalty_screen.dart';
+import 'add_transit_pass_screen.dart';
 import 'manual_entry_screen.dart';
 import 'transaction_history_screen.dart';
 import 'settings_screen.dart';
+import 'card_scanner_screen.dart';
 
 class AddToWalletScreen extends StatelessWidget {
   static const primaryColor = Color(0xFF0058BA);
@@ -126,7 +129,25 @@ class AddToWalletScreen extends StatelessWidget {
                   delegate: SliverChildListDelegate([
                     // Scan Card Section
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () async {
+                        // 1. Open the scanner and wait for a result
+                        final scannedData = await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CardScannerScreen()),
+                        );
+
+                        // 2. If we got data back, pass it to the Manual Entry screen
+                        if (scannedData != null && context.mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ManualEntryScreen(
+                                initialData: scannedData as Map<String, String>,
+                              ),
+                            ),
+                          );
+                        }
+                      },
                       child: Container(
                         decoration: BoxDecoration(
                           color: surfaceContainerLowestColor,
@@ -258,7 +279,8 @@ class AddToWalletScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    _buildOptionItem(
+    _buildOptionItem(
+                      context: context,
                       icon: Icons.credit_card,
                       iconColor: Colors.blue[600]!,
                       bgColor: Colors.blue[50]!,
@@ -268,9 +290,16 @@ class AddToWalletScreen extends StatelessWidget {
                       onSurfaceVariantColor: onSurfaceVariantColor,
                       surfaceContainerLowestColor: surfaceContainerLowestColor,
                       surfaceContainerLowColor: surfaceContainerLowColor,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ManualEntryScreen()),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     _buildOptionItem(
+                      context: context,
                       icon: Icons.directions_subway,
                       iconColor: secondaryColor,
                       bgColor: const Color(0xFFE8F5E9),
@@ -280,9 +309,16 @@ class AddToWalletScreen extends StatelessWidget {
                       onSurfaceVariantColor: onSurfaceVariantColor,
                       surfaceContainerLowestColor: surfaceContainerLowestColor,
                       surfaceContainerLowColor: surfaceContainerLowColor,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AddTransitPassScreen()),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     _buildOptionItem(
+                      context: context,
                       icon: Icons.card_membership,
                       iconColor: Colors.amber[600]!,
                       bgColor: Colors.yellow[50]!,
@@ -292,9 +328,21 @@ class AddToWalletScreen extends StatelessWidget {
                       onSurfaceVariantColor: onSurfaceVariantColor,
                       surfaceContainerLowestColor: surfaceContainerLowestColor,
                       surfaceContainerLowColor: surfaceContainerLowColor,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddLoyaltyScreen(
+                              initialTitle: '',
+                              screenTitle: 'Add Loyalty Card',
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     _buildOptionItem(
+                      context: context,
                       icon: Icons.card_giftcard,
                       iconColor: tertiaryColor,
                       bgColor: const Color(0xFFFFEBEE),
@@ -304,6 +352,17 @@ class AddToWalletScreen extends StatelessWidget {
                       onSurfaceVariantColor: onSurfaceVariantColor,
                       surfaceContainerLowestColor: surfaceContainerLowestColor,
                       surfaceContainerLowColor: surfaceContainerLowColor,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddLoyaltyScreen(
+                              initialTitle: 'Gift Card',
+                              screenTitle: 'Add Gift Card',
+                            ),
+                          ),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 48),
@@ -340,7 +399,7 @@ class AddToWalletScreen extends StatelessWidget {
                                   color: onSurfaceVariantColor,
                                 ),
                                 children: [
-                                  TextSpan(text: 'Your data is protected by Google\'s industry-leading security. '),
+                                  TextSpan(text: 'Your data is protected by Zim Pay\'s industry-leading security. '),
                                   TextSpan(
                                     text: 'Learn more',
                                     style: TextStyle(
@@ -493,6 +552,7 @@ class AddToWalletScreen extends StatelessWidget {
   }
 
   Widget _buildOptionItem({
+    required BuildContext context,
     required IconData icon,
     required Color iconColor,
     required Color bgColor,
@@ -502,11 +562,12 @@ class AddToWalletScreen extends StatelessWidget {
     required Color onSurfaceVariantColor,
     required Color surfaceContainerLowestColor,
     required Color surfaceContainerLowColor,
+    required VoidCallback onTap,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {},
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(20),

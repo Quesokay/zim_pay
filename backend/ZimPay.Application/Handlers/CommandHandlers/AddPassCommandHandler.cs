@@ -2,11 +2,11 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using GoogleWalletClone.Application.Commands;
-using GoogleWalletClone.Application.Interfaces;
-using GoogleWalletClone.Domain;
+using ZimPay.Application.Commands;
+using ZimPay.Application.Interfaces;
+using ZimPay.Domain;
 
-namespace GoogleWalletClone.Application.Handlers.CommandHandlers
+namespace ZimPay.Application.Handlers.CommandHandlers
 {
     public class AddPassCommandHandler : IRequestHandler<AddPassCommand, int>
     {
