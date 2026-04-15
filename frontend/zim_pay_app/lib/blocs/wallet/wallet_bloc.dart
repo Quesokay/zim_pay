@@ -33,10 +33,10 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
     emit(state.copyWith(status: WalletStatus.loading));
     try {
       debugPrint('🌐 [API] Sending POST request to .NET backend...');
-      await walletRepository.addPaymentMethod(event.userId, event.cardDetails);
+      final token = await walletRepository.addPaymentMethod(event.userId, event.cardDetails);
       add(LoadWalletItems());
-      debugPrint('✅ [API] Backend responded successfully!');
-      emit(state.copyWith(status: WalletStatus.success));
+      debugPrint('✅ [API] Backend responded successfully with token: $token');
+      emit(state.copyWith(status: WalletStatus.success, lastGeneratedToken: token));
     } catch (e) {
       debugPrint('❌ [API] HTTP Request completely FAILED: $e');
       emit(state.copyWith(status: WalletStatus.failure));

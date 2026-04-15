@@ -12,6 +12,7 @@ import 'passes_loyalty_screen.dart';
 import 'transaction_history_screen.dart';
 import 'settings_screen.dart';
 import 'cards_screen.dart';
+import 'merchant_pos_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -61,6 +62,17 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: surfaceColor,
       extendBody: true,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MerchantPosScreen()),
+          );
+        },
+        icon: const Icon(Icons.point_of_sale),
+        label: const Text('POS Test'),
+        backgroundColor: Colors.redAccent, // Making it red so you remember to delete it later!
+      ),
       body: BlocBuilder<WalletBloc, WalletState>(
         builder: (context, state) {
           debugPrint('HomeScreen: BlocBuilder state status: ${state.status}');

@@ -10,6 +10,7 @@ import 'repositories/health_repository.dart';
 import 'screens/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:zim_pay_app/screens/merchant_pos_screen.dart';
 
 void main() async {
   // 1. Ensure Flutter's engine is ready

@@ -74,5 +74,13 @@ namespace ZimPay.Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<PaymentMethod> GetByTokenAsync(string digitalToken)
+        {
+            // FirstOrDefaultAsync will return null if the token doesn't match any card,
+            // which allows our CommandHandler to safely decline the transaction.
+            return await _context.PaymentMethods
+                .FirstOrDefaultAsync(p => p.DigitalToken == digitalToken);
+        }
     }
 }

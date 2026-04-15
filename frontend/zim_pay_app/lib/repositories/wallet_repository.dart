@@ -53,21 +53,25 @@ class WalletRepository {
     return items;
   }
 
-  Future<void> addPaymentMethod(int userId, CreatePaymentMethodDto cardData) async {
+  Future<String> addPaymentMethod(int userId, CreatePaymentMethodDto cardData) async {
     final url = Uri.parse('$baseUrl/PaymentMethod');
     
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'userId': userId,
-        'paymentMethod': cardData.toJson(),
+        'UserId': userId,
+        'PaymentMethod': cardData.toJson(),
       }),
     );
 
     if (response.statusCode != 201 && response.statusCode != 200) {
       throw Exception('Failed to add payment method: ${response.body}');
     }
+
+    final Map<String, dynamic> responseData = jsonDecode(response.body);
+    // Extracting "data" which contains the token from ApiResponse<string>
+    return responseData['data'] ?? '';
   }
 
   Future<void> addPass(int userId, CreatePassDto passDetails) async {
@@ -76,8 +80,8 @@ class WalletRepository {
     
     // Wrap data in the AddPassCommand structure expected by backend
     final command = {
-      'userId': userId,
-      'pass': passDetails.toJson()
+      'UserId': userId,
+      'Pass': passDetails.toJson()
     };
 
     final response = await http.post(

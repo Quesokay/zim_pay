@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -106,29 +105,28 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       body: BlocListener<WalletBloc, WalletState>(
         listenWhen: (previous, current) => previous.status == WalletStatus.loading && current.status == WalletStatus.success,
         listener: (context, state) {
-          Navigator.pop(context);
           if (state.status == WalletStatus.success) {
             // 1. Close the manual entry screen
             Navigator.pop(context);
 
-            // 2. Navigate to the NFC Writer screen with a test token
+            // 2. Navigate to the NFC Writer screen with the REAL token from the backend
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const LinkTagScreen(
-                  digitalToken: "TEST_SECURE_TOKEN_12345", // We will use the real .NET token later!
+                builder: (context) => LinkTagScreen(
+                  digitalToken: state.lastGeneratedToken ?? "ERROR_NO_TOKEN", 
                 ),
               ),
             );
           } else if (state.status == WalletStatus.failure) {
             // Show error snackbar
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to save card to backend'),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   const SnackBar(
-          //     content: Text('Card added successfully'),
-          //     backgroundColor: Colors.green,
-          //   ),
-          // );
         },
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -297,35 +295,51 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   }
 
   // 1. The Phone Auth Flow
+  // 1. The Phone Auth Flow
   Future<void> _startPhoneVerification(CreatePaymentMethodDto cardDto) async {
-    // For a capstone, you can hardcode a test number here, or pass in the logged-in user's actual phone number.
     const testPhoneNumber = '+15555555555';
-    await FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true);
 
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: testPhoneNumber,
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        // Auto-resolution (usually only works on Android)
-        await FirebaseAuth.instance.signInWithCredential(credential);
-        if (mounted) {
-          _saveCardToBackend(cardDto);
-        }
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Verification Failed: ${e.message}')),
-          );
-        }
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        // SMS was sent! Show the dialog to type the code.
-        if (mounted) {
-          _showOTPDialog(verificationId, cardDto);
-        }
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {},
-    );
+    debugPrint('📞 [Auth] Initiating Firebase Phone Auth for $testPhoneNumber...');
+
+    try {
+      await FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true);
+      debugPrint('⚙️ [Auth] Testing settings applied.');
+
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: testPhoneNumber,
+        timeout: const Duration(seconds: 60), // Force a timeout so it doesn't hang forever
+
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          debugPrint('✅ [Auth] Auto-verification completed perfectly!');
+          await FirebaseAuth.instance.signInWithCredential(credential);
+          if (mounted) {
+            _saveCardToBackend(cardDto);
+          }
+        },
+
+        verificationFailed: (FirebaseAuthException e) {
+          debugPrint('❌ [Auth] Verification completely FAILED: ${e.code} - ${e.message}');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Verification Failed: ${e.message}')),
+            );
+          }
+        },
+
+        codeSent: (String verificationId, int? resendToken) {
+          debugPrint('📩 [Auth] Firebase successfully sent the code! Opening dialog...');
+          if (mounted) {
+            _showOTPDialog(verificationId, cardDto);
+          }
+        },
+
+        codeAutoRetrievalTimeout: (String verificationId) {
+          debugPrint('⏱️ [Auth] Auto-retrieval timed out. User must enter code manually.');
+        },
+      );
+    } catch (e) {
+      debugPrint('💥 [Auth] Hard crash before Firebase could even start: $e');
+    }
   }
 
   // 2. The Pop-Up Dialog for the 6-digit code
@@ -372,8 +386,9 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                 await FirebaseAuth.instance.signInWithCredential(credential);
 
                 debugPrint('✅ [UI] Firebase verification SUCCESS!');
-                _handleSuccessfulVerification(cardDto);
-
+                if (mounted) {
+                  _handleSuccessfulVerification(cardDto);
+                }
               } catch (e) {
                 // 2. CHECK FOR THE PIGEON BUG:
                 // If it's a type cast error but current user is NOT null, it actually worked!
@@ -381,13 +396,16 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     FirebaseAuth.instance.currentUser != null) {
 
                   debugPrint('⚠️ [UI] Caught Pigeon type-cast bug, but User exists. Proceeding...');
-                  _handleSuccessfulVerification(cardDto);
-
+                  if (mounted) {
+                    _handleSuccessfulVerification(cardDto);
+                  }
                 } else {
                   debugPrint('❌ [UI] Firebase verification FAILED: $e');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invalid Code. Please try again.')),
-                  );
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Invalid Code. Please try again.')),
+                    );
+                  }
                 }
               }
             },

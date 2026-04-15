@@ -9,7 +9,7 @@ using ZimPay.Domain;
 
 namespace ZimPay.Application.Handlers.CommandHandlers
 {
-    public class AddPaymentMethodCommandHandler : IRequestHandler<AddPaymentMethodCommand, int>
+    public class AddPaymentMethodCommandHandler : IRequestHandler<AddPaymentMethodCommand, string>
     {
         private readonly IPaymentMethodRepository _paymentMethodRepository;
         private readonly IUserRepository _userRepository;
@@ -28,7 +28,7 @@ namespace ZimPay.Application.Handlers.CommandHandlers
             _logger = logger;
         }
 
-        public async Task<int> Handle(AddPaymentMethodCommand request, CancellationToken cancellationToken)
+        public async Task<string> Handle(AddPaymentMethodCommand request, CancellationToken cancellationToken)
         {
             _logger.LogInformation("🚀 [BACKEND] Received AddPaymentMethod request for User ID: {UserId}", request.UserId);
 
@@ -88,7 +88,7 @@ namespace ZimPay.Application.Handlers.CommandHandlers
 
             _logger.LogInformation("✅ [BACKEND] SUCCESS! Payment Method {MethodId} saved with Digital Token attached.", paymentMethod.Id);
 
-            return paymentMethod.Id;
+            return paymentMethod.DigitalToken;
         }
     }
 }
