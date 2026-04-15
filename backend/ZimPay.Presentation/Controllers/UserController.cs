@@ -92,5 +92,22 @@ namespace ZimPay.Presentation.Controllers
                 Data = passes
             });
         }
+
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
+        {
+            var command = new UpdateUserCommand(id, dto);
+            var updatedUser = await _mediator.Send(command);
+
+            if (updatedUser == null)
+                return NotFound(new { message = $"User with ID {id} not found." });
+
+            return Ok(new ApiResponse<UserDetailDto>
+            {
+                Success = true,
+                Message = "User updated successfully",
+                Data = updatedUser
+            });
+        }
     }
 }

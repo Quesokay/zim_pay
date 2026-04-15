@@ -1,7 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:barcode_widget/barcode_widget.dart';
+import '../blocs/user/user_bloc.dart';
+import '../blocs/wallet/wallet_bloc.dart';
+import '../blocs/wallet/wallet_event.dart';
 import '../models/wallet_item.dart';
 import 'home_screen.dart';
 import 'cards_screen.dart';
@@ -324,13 +328,27 @@ class CardDetailsExpandedScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              // Note: DeleteWalletItem is currently undefined in wallet_event.dart
-              // and the logic in WalletBloc for deletion might need updating.
-              // For now, we pop the dialog and stay on the screen to avoid crashes.
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Delete feature is temporarily unavailable')),
-              );
+              final userState = context.read<UserBloc>().state;
+              final userId = (userState as UserCreated).user.id;
+
+              if (item is CreditCard) {
+                context.read<WalletBloc>().add(DeleteWalletItem(
+                      userId: userId,
+                      paymentMethodId: (item as CreditCard).id,
+                    ));
+              } else if (item is TransitPass) {
+                context.read<WalletBloc>().add(DeletePass(
+                      userId: userId,
+                      passId: (item as TransitPass).id,
+                    ));
+              } else if (item is LoyaltyCard) {
+                context.read<WalletBloc>().add(DeletePass(
+                      userId: userId,
+                      passId: (item as LoyaltyCard).id,
+                    ));
+              }
+              Navigator.pop(dialogContext); // Pop dialog
+              Navigator.pop(context); // Go back to previous screen
             },
             child: const Text('Remove', style: TextStyle(color: Colors.red)),
           ),

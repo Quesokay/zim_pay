@@ -16,6 +16,16 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _emailEnabled = false;
+  double _currentLimit = 50.0; // Local state for the biometric limit slider
+
+  @override
+  void initState() {
+    super.initState();
+    final userState = context.read<UserBloc>().state;
+    if (userState is UserCreated) {
+      _currentLimit = userState.user.tapLimit;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,9 +75,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 actions: [
                   BlocBuilder<UserBloc, UserState>(
                     builder: (context, state) {
-                      String? avatarUrl;
+                      String name = 'Guest';
                       if (state is UserCreated) {
-                        avatarUrl = 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(state.user.name)}&background=random';
+                        name = state.user.name;
                       }
                       return Padding(
                         padding: const EdgeInsets.only(right: 16.0),
@@ -77,15 +87,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 2),
-                            image: avatarUrl != null
-                                ? DecorationImage(
-                                    image: NetworkImage(avatarUrl),
-                                    fit: BoxFit.cover,
-                                  )
-                                : const DecorationImage(
-                                    image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuCisHnXI4U1Q2xGJkfUbGqKW_G7KJwkCDeX9JHlcQgC-UHAvT52_IsBXK7m_shH3k0yi_bGtBumF3AdmvObV7Mhf_yrp2HWXExSFvPuGZDfSN27lBYfjxC8ApInQgh03S17tj6ycZUrWZnHw3bqnzrY_4YQGvXELDlwkucdbCXRVBSDUnesbMoXvZxFxbW_15ZgBC7PfOezunEpDfRR3N3DMldjLqfYuRWzveZeDAJeq7JlDyz8Qng4LO9KTqqyI6OMxZC7b01Db_Vx'),
-                                    fit: BoxFit.cover,
-                                  ),
+                            image: DecorationImage(
+                              image: NetworkImage('https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random'),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       );
@@ -214,6 +219,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 onSurfaceColor: onSurfaceColor,
                                 onSurfaceVariantColor: onSurfaceVariantColor,
                               ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                child: Divider(color: outlineVariantColor.withValues(alpha: 0.3), height: 32),
+                              ),
+                              _buildLimitSlider(primaryColor, onSurfaceColor, onSurfaceVariantColor),
                             ],
                           );
                         },
@@ -327,7 +337,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(builder: (context) => const HomeScreen()),
-                          (route) => false,
+                              (route) => false,
                         );
                       }),
                       _buildNavItem(context, Icons.history, 'History', false, onTap: () {
@@ -426,6 +436,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
             activeTrackColor: primaryColor,
             activeThumbColor: Colors.white,
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLimitSlider(Color primaryColor, Color onSurfaceColor, Color onSurfaceVariantColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tap-to-Pay Auto-Approve Limit',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.bold,
+              color: onSurfaceColor,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Transactions under this amount won\'t require a fingerprint.',
+            style: GoogleFonts.inter(
+              color: onSurfaceVariantColor,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text('\$0', style: GoogleFonts.inter(color: onSurfaceVariantColor)),
+              Expanded(
+                child: Slider(
+                  value: _currentLimit,
+                  min: 0,
+                  max: 200,
+                  divisions: 20,
+                  activeColor: primaryColor,
+                  label: '\$${_currentLimit.toStringAsFixed(0)}',
+                  onChanged: (double value) {
+                    setState(() {
+                      _currentLimit = value;
+                    });
+                  },
+                  onChangeEnd: (double finalValue) {
+                    context.read<UserBloc>().add(UpdateUserEvent(tapLimit: finalValue));
+                    debugPrint('Saved new limit: \$${finalValue.toStringAsFixed(2)}');
+                  },
+                ),
+              ),
+              Text('\$200', style: GoogleFonts.inter(color: onSurfaceVariantColor)),
+            ],
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -588,9 +652,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: isActive
               ? BoxDecoration(
-                  color: const Color(0xFFD3E3FD),
-                  borderRadius: BorderRadius.circular(30),
-                )
+            color: const Color(0xFFD3E3FD),
+            borderRadius: BorderRadius.circular(30),
+          )
               : null,
           child: Column(
             mainAxisSize: MainAxisSize.min,

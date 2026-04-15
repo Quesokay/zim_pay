@@ -24,7 +24,9 @@ class _CardsScreenState extends State<CardsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<WalletBloc>().add(LoadWalletItems());
+    final userState = context.read<UserBloc>().state;
+    final userId = (userState as UserCreated).user.id;
+    context.read<WalletBloc>().add(LoadWalletItems(userId: userId));
   }
 
   @override
@@ -86,23 +88,35 @@ class _CardsScreenState extends State<CardsScreen> {
                           ),
                         ),
                         actions: [
-                          IconButton(
-                            icon: const Icon(Icons.more_vert, color: Color(0xFF4285F4)),
-                            onPressed: () {},
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 16.0),
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                  image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuCT-KHpu57LQ66b3ZD40qcWUj5Fn48Rb7neqXOfWnUvwY7Lm5f6WrL-jDxP-7oFLZXdflj0hR5LuJl5KKQU-Jt3lTH7PFEN6HYeGnj0JGyUi92EdFpowpkxo1zwX3SOnUPqu18oj-GpGyLbb6n5D0iXj3c7FlwfAAVqKu7zai4CcynXRt4oEFW4KjrPpdAiD_G9Aog4tJRVTZHPptTbysHiHXP6jBf7PYMgjTwsIArc5B1TqaNPI_2hIbDqlqtDWkIaO7XiPHdJRIOy'),
-                                  fit: BoxFit.cover,
+                          BlocBuilder<UserBloc, UserState>(
+                            builder: (context, userState) {
+                              String name = 'Guest';
+                              if (userState is UserCreated) {
+                                name = userState.user.name;
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 16.0),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      image: DecorationImage(
+                                        image: NetworkImage('https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random'),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
                           ),
                         ],
                       ),

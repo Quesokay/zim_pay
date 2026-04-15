@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace ZimPay.Application.Commands
+namespace ZimPay.Application.Commands.Transaction
 {
     public class ProcessTransactionCommand : IRequest<bool>
     {

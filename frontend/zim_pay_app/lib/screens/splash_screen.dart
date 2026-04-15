@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import '../repositories/health_repository.dart';
+import '../blocs/user/user_bloc.dart';
 import 'home_screen.dart';
+import 'login_screen.dart'; // ADDED: Import the new Login Screen
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -59,34 +61,47 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   Future<void> _checkConnectivity() async {
     if (_isChecking) return;
-    
+
     setState(() {
       _isChecking = true;
       _statusMessage = 'Connecting to Zim Pay services...';
     });
-    
+
     final healthRepository = context.read<HealthRepository>();
     final stopwatch = Stopwatch()..start();
-    
+
     _isBackendReachable = await healthRepository.checkHealth();
     stopwatch.stop();
 
     if (mounted) {
       setState(() => _isChecking = false);
       if (_isBackendReachable) {
-        setState(() => _statusMessage = 'Connection established');
+        setState(() => _statusMessage = 'Connection established. Authenticating...');
         // Ensure splash shows for at least 2 seconds if connection is fast
         final remainingDelay = 2000 - stopwatch.elapsedMilliseconds;
         Future.delayed(Duration(milliseconds: remainingDelay > 0 ? remainingDelay : 500), () {
           if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
+            _routeBasedOnAuth(); // ROUTE INTELLIGENTLY
           }
         });
       } else {
         setState(() => _statusMessage = 'Backend unreachable.');
       }
+    }
+  }
+
+  // ADDED: Centralized routing logic based on user state
+  void _routeBasedOnAuth() {
+    final userState = context.read<UserBloc>().state;
+
+    if (userState is UserCreated) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
     }
   }
 
@@ -263,9 +278,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (context) => const HomeScreen()),
-                        );
+                        // ALSO ROUTE INTELLIGENTLY IF PROCEEDING OFFLINE
+                        _routeBasedOnAuth();
                       },
                       child: Text(
                         'Proceed Offline',

@@ -10,7 +10,7 @@ import '../constants.dart';
 class WalletRepository {
   final String baseUrl = ApiConstants.baseUrl;
 
-  Future<List<WalletItem>> getWalletItems([int userId = 1]) async {
+  Future<List<WalletItem>> getWalletItems(int userId) async {
     developer.log('WALLET_REPO: Fetching items for user $userId');
     List<WalletItem> items = [];
 
@@ -97,7 +97,7 @@ class WalletRepository {
     }
   }
 
-  Future<List<LoyaltyCard>> getLoyaltyCards([int userId = 1]) async {
+  Future<List<LoyaltyCard>> getLoyaltyCards(int userId) async {
     developer.log('WALLET_REPO: Fetching loyalty cards for user $userId');
     try {
       final url = '$baseUrl/User/$userId/passes';
