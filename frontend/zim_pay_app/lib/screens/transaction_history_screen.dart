@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../blocs/user/user_bloc.dart';
 import '../blocs/transaction/transaction_bloc.dart';
 import '../blocs/transaction/transaction_event.dart';
 import '../blocs/transaction/transaction_state.dart';
@@ -23,7 +24,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<TransactionBloc>().add(LoadTransactions());
+    final userState = context.read<UserBloc>().state;
+    if (userState is UserCreated) {
+      context.read<TransactionBloc>().add(LoadTransactions(userId: userState.user.id));
+    } else {
+      // Fallback for development if no user is logged in
+      context.read<TransactionBloc>().add(const LoadTransactions(userId: 1));
+    }
   }
 
   @override
@@ -81,7 +88,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Wallet',
+                          'Zim Pay',
                           style: GoogleFonts.plusJakartaSans(
                             color: onSurfaceColor,
                             fontWeight: FontWeight.bold,

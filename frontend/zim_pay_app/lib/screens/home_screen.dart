@@ -12,6 +12,7 @@ import 'passes_loyalty_screen.dart';
 import 'transaction_history_screen.dart';
 import 'settings_screen.dart';
 import 'cards_screen.dart';
+import 'merchant_pos_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     });
-    // Trigger initial load
+
     context.read<WalletBloc>().add(LoadWalletItems());
   }
 
@@ -61,8 +62,23 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: surfaceColor,
       extendBody: true,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MerchantPosScreen()),
+          );
+        },
+        icon: const Icon(Icons.point_of_sale),
+        label: const Text('POS Test'),
+        backgroundColor: Colors.redAccent, // Making it red so you remember to delete it later!
+      ),
       body: BlocBuilder<WalletBloc, WalletState>(
         builder: (context, state) {
+          debugPrint('HomeScreen: BlocBuilder state status: ${state.status}');
+          debugPrint('HomeScreen: Wallet items: ${state.walletItems.length}');
+          debugPrint('HomeScreen: Loyalty cards: ${state.loyaltyCards.length}');
+
           if (state.status == WalletStatus.loading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -95,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const Icon(Icons.account_balance_wallet, color: primaryColor, size: 28),
                         const SizedBox(width: 12),
                         Text(
-                          'Google Wallet',
+                          'Zim Pay',
                           style: GoogleFonts.plusJakartaSans(
                             color: onSurfaceColor,
                             fontWeight: FontWeight.bold,
@@ -290,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const Icon(Icons.verified_user, color: primaryColor),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Your payment info is securely encrypted. Google Wallet does not share your actual card numbers with businesses.',
+                                  'Your payment info is securely encrypted. Zim Pay does not share your actual card numbers with businesses.',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
@@ -372,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const CardDetailsScreen()),
+            MaterialPageRoute(builder: (context) => CardDetailsScreen(item: item)),
           );
         },
         child: _buildCreditCard(
@@ -384,11 +400,19 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } else if (item is TransitPass) {
-      return _buildTransitPass(
-        item.primaryColor,
-        item.secondaryColor,
-        item.title,
-        item.balance,
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => CardDetailsScreen(item: item)),
+          );
+        },
+        child: _buildTransitPass(
+          item.primaryColor,
+          item.secondaryColor,
+          item.title,
+          item.balance,
+        ),
       );
     }
     return const SizedBox.shrink();
@@ -400,15 +424,23 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color onSurfaceVariantColor,
     required Color surfaceContainerLowestColor,
   }) {
-    return _buildLoyaltyItem(
-      icon: card.icon,
-      iconColor: card.iconColor,
-      bgColor: card.bgColor,
-      title: card.title,
-      subtitle: card.subtitle,
-      onSurfaceColor: onSurfaceColor,
-      onSurfaceVariantColor: onSurfaceVariantColor,
-      surfaceContainerLowestColor: surfaceContainerLowestColor,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => CardDetailsScreen(item: card)),
+        );
+      },
+      child: _buildLoyaltyItem(
+        icon: card.icon,
+        iconColor: card.iconColor,
+        bgColor: card.bgColor,
+        title: card.title,
+        subtitle: card.subtitle,
+        onSurfaceColor: onSurfaceColor,
+        onSurfaceVariantColor: onSurfaceVariantColor,
+        surfaceContainerLowestColor: surfaceContainerLowestColor,
+      ),
     );
   }
 

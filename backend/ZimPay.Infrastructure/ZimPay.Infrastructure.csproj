@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
     <ProjectReference Include="..\ZimPay.Application\ZimPay.Application.csproj" />
     <ProjectReference Include="..\ZimPay.Domain\ZimPay.Domain.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.5" />

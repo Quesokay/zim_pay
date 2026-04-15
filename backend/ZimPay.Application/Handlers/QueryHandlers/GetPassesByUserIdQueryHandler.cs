@@ -3,11 +3,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using GoogleWalletClone.Application.DTOs;
-using GoogleWalletClone.Application.Interfaces;
-using GoogleWalletClone.Application.Queries;
+using ZimPay.Application.DTOs;
+using ZimPay.Application.Interfaces;
+using ZimPay.Application.Queries;
 
-namespace GoogleWalletClone.Application.Handlers.QueryHandlers
+namespace ZimPay.Application.Handlers.QueryHandlers
 {
     public class GetPassesByUserIdQueryHandler : IRequestHandler<GetPassesByUserIdQuery, List<PassDto>>
     {
@@ -20,7 +20,7 @@ namespace GoogleWalletClone.Application.Handlers.QueryHandlers
 
         public async Task<List<PassDto>> Handle(GetPassesByUserIdQuery request, CancellationToken cancellationToken)
         {
-            IEnumerable<GoogleWalletClone.Domain.Pass> passes;
+            IEnumerable<ZimPay.Domain.Pass> passes;
 
             if (request.OnlyActive)
             {

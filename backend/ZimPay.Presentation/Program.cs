@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ZimPay.Application.Commands;
 using ZimPay.Infrastructure;
 using ZimPay.Application.Interfaces;
+using ZimPay.Infrastructure.Services;
 using ZimPay.Infrastructure.Repositories;
 using ZimPay.Presentation.Middleware;
 
@@ -11,6 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add health checks
+builder.Services.AddHealthChecks();
 
 // Add DbContext with SQLite
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=wallet.db";
@@ -28,6 +32,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IPassRepository, PassRepository>();
+builder.Services.AddScoped<ITokenizationService, TokenizationService>();
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -59,9 +64,13 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();
+
+// Map health check endpoint
+app.MapHealthChecks("/health");
+
 
 app.Run();

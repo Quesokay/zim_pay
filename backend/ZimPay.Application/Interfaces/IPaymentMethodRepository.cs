@@ -15,5 +15,6 @@ namespace ZimPay.Application.Interfaces
         Task UpdateAsync(PaymentMethod paymentMethod);
         Task DeleteAsync(int id);
         Task SaveChangesAsync();
+        Task<PaymentMethod> GetByTokenAsync(string digitalToken);
     }
 }

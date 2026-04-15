@@ -1,15 +1,16 @@
-// ignore_for_file: unused_local_variable
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:barcode_widget/barcode_widget.dart';
+import '../models/wallet_item.dart';
 import 'home_screen.dart';
 import 'cards_screen.dart';
 import 'transaction_history_screen.dart';
 import 'settings_screen.dart';
 
 class CardDetailsExpandedScreen extends StatelessWidget {
-  const CardDetailsExpandedScreen({super.key});
+  final WalletItem item;
+  const CardDetailsExpandedScreen({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +19,6 @@ class CardDetailsExpandedScreen extends StatelessWidget {
     const onSurfaceColor = Color(0xFF2B2F32);
     const onSurfaceVariantColor = Color(0xFF585C5F);
     const surfaceContainerLowestColor = Color(0xFFFFFFFF);
-    const surfaceContainerHighColor = Color(0xFFDEE3E8);
     const secondaryColor = Color(0xFF006A2B);
     const errorColor = Color(0xFFB31B25);
 
@@ -65,7 +65,12 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // Hero Section: Card Graphic
-                    _buildHeroCard(),
+                    if (item is CreditCard)
+                      _buildHeroCard(item as CreditCard)
+                    else if (item is TransitPass)
+                      _buildHeroPass(item as TransitPass)
+                    else if (item is LoyaltyCard)
+                      _buildHeroLoyalty(item as LoyaltyCard),
                     const SizedBox(height: 24),
 
                     // Ready to pay status indicator
@@ -73,7 +78,9 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF86F898).withValues(alpha: 0.1),
+                          color: item is LoyaltyCard
+                              ? (item as LoyaltyCard).iconColor.withValues(alpha: 0.1)
+                              : const Color(0xFF86F898).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(30),
                         ),
                         child: Row(
@@ -82,16 +89,16 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: const BoxDecoration(
-                                color: secondaryColor,
+                              decoration: BoxDecoration(
+                                color: item is LoyaltyCard ? (item as LoyaltyCard).iconColor : secondaryColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              'Ready to pay',
+                              item is LoyaltyCard ? 'Ready to scan' : 'Ready to pay',
                               style: GoogleFonts.inter(
-                                color: secondaryColor,
+                                color: item is LoyaltyCard ? (item as LoyaltyCard).iconColor : secondaryColor,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                                 letterSpacing: 0.5,
@@ -104,6 +111,37 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                     const SizedBox(height: 32),
 
                     // Information Sections (Bento-style layout)
+                    if (item is LoyaltyCard)
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 24),
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: BarcodeWidget(
+                            barcode: Barcode.code128(),
+                            data: (item as LoyaltyCard).id.toString().padLeft(12, '0'),
+                            width: 300,
+                            height: 120,
+                            drawText: true,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: onSurfaceColor,
+                            ),
+                          ),
+                        ),
+                      ),
+
                     GridView.count(
                       crossAxisCount: 1,
                       shrinkWrap: true,
@@ -112,24 +150,34 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                       childAspectRatio: 4.0,
                       children: [
                         _buildInfoBlock(
-                          icon: Icons.person,
-                          label: 'Cardholder name',
-                          value: 'Alex Vanguard',
+                          icon: Icons.info_outline,
+                          label: 'Name',
+                          value: item.title,
                           onSurfaceColor: onSurfaceColor,
                           onSurfaceVariantColor: onSurfaceVariantColor,
                           surfaceContainerLowestColor: surfaceContainerLowestColor,
                         ),
-                        _buildInfoBlock(
-                          icon: Icons.pin,
-                          label: 'Virtual account number',
-                          value: '•••• •••• •••• 1290',
-                          isMono: true,
-                          isSecure: true,
-                          primaryColor: primaryColor,
-                          onSurfaceColor: onSurfaceColor,
-                          onSurfaceVariantColor: onSurfaceVariantColor,
-                          surfaceContainerLowestColor: surfaceContainerLowestColor,
-                        ),
+                        if (item is CreditCard)
+                          _buildInfoBlock(
+                            icon: Icons.pin,
+                            label: 'Virtual account number',
+                            value: (item as CreditCard).cardNumber,
+                            isMono: true,
+                            isSecure: true,
+                            primaryColor: primaryColor,
+                            onSurfaceColor: onSurfaceColor,
+                            onSurfaceVariantColor: onSurfaceVariantColor,
+                            surfaceContainerLowestColor: surfaceContainerLowestColor,
+                          ),
+                        if (item is LoyaltyCard)
+                          _buildInfoBlock(
+                            icon: Icons.card_membership,
+                            label: 'Membership Details',
+                            value: (item as LoyaltyCard).subtitle,
+                            onSurfaceColor: onSurfaceColor,
+                            onSurfaceVariantColor: onSurfaceVariantColor,
+                            surfaceContainerLowestColor: surfaceContainerLowestColor,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -137,73 +185,23 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _buildSimpleInfoBlock(
-                            label: 'Network',
-                            value: 'Mastercard',
-                            trailing: _buildMastercardLogo(),
+                            label: 'Type',
+                            value: item is CreditCard
+                                ? 'Credit Card'
+                                : item is TransitPass
+                                    ? 'Transit Pass'
+                                    : 'Loyalty Card',
+                            trailing: item is CreditCard
+                                ? _buildMastercardLogo()
+                                : item is TransitPass
+                                    ? const Icon(Icons.train, color: primaryColor)
+                                    : Icon((item as LoyaltyCard).icon, color: (item as LoyaltyCard).iconColor),
                             onSurfaceColor: onSurfaceColor,
                             onSurfaceVariantColor: onSurfaceVariantColor,
                             surfaceContainerLowestColor: surfaceContainerLowestColor,
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildAddressBlock(
-                      label: 'Billing address',
-                      value: '123 Obsidian Dr, San Francisco, CA',
-                      onSurfaceColor: onSurfaceColor,
-                      onSurfaceVariantColor: onSurfaceVariantColor,
-                      surfaceContainerLowestColor: surfaceContainerLowestColor,
-                      primaryColor: primaryColor,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Security Information
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: primaryColor.withValues(alpha: 0.1)),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: primaryColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.security, color: primaryColor, size: 24),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Enhanced Encryption',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontWeight: FontWeight.bold,
-                                    color: onSurfaceColor,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Your real card number is never shared with merchants. We use a unique digital identifier (token) for every transaction to keep your financial identity invisible to third parties.',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    color: onSurfaceVariantColor,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                     const SizedBox(height: 32),
 
@@ -221,7 +219,7 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                           shadowColor: primaryColor.withValues(alpha: 0.4),
                         ),
                         child: Text(
-                          'Update payment info',
+                          'Update info',
                           style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ),
@@ -230,7 +228,9 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          _showDeleteConfirmation(context);
+                        },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: errorColor,
                           side: BorderSide(color: errorColor.withValues(alpha: 0.3)),
@@ -238,7 +238,7 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                         ),
                         child: Text(
-                          'Remove card',
+                          'Remove ${item is CreditCard ? 'card' : item is TransitPass ? 'pass' : 'loyalty card'}',
                           style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ),
@@ -311,18 +311,46 @@ class CardDetailsExpandedScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeroCard() {
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Remove ${item is CreditCard ? 'Card' : item is TransitPass ? 'Pass' : 'Loyalty Card'}?'),
+        content: Text('Are you sure you want to remove this ${item.title} from your wallet?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              // Note: DeleteWalletItem is currently undefined in wallet_event.dart
+              // and the logic in WalletBloc for deletion might need updating.
+              // For now, we pop the dialog and stay on the screen to avoid crashes.
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Delete feature is temporarily unavailable')),
+              );
+            },
+            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroCard(CreditCard card) {
     return AspectRatio(
       aspectRatio: 1.586,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF0F172A),
-              Color(0xFF1E293B),
+              card.primaryColor,
+              card.secondaryColor,
               Colors.black,
             ],
           ),
@@ -347,18 +375,7 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Infinite Obsidian',
-                        style: GoogleFonts.inter(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 2.0,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        'Digital Custodian',
+                        card.bankName,
                         style: GoogleFonts.plusJakartaSans(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -377,26 +394,12 @@ class CardDetailsExpandedScreen extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFDE68A), Color(0xFFF59E0B)],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 8),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '•••• •••• •••• 1290',
+                    card.cardNumber,
                     style: GoogleFonts.plusJakartaSans(
                       color: Colors.white,
                       fontSize: 20,
@@ -414,6 +417,102 @@ class CardDetailsExpandedScreen extends StatelessWidget {
                   child: _buildMastercardLogo(),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroPass(TransitPass pass) {
+    return AspectRatio(
+      aspectRatio: 1.586,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              pass.primaryColor,
+              pass.secondaryColor,
+            ],
+          ),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(Icons.train, color: Colors.white, size: 32),
+                Icon(Icons.contactless, color: Colors.white, size: 28),
+              ],
+            ),
+            Text(
+              pass.title,
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+            Text(
+              'Balance: ${pass.balance}',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroLoyalty(LoyaltyCard card) {
+    return AspectRatio(
+      aspectRatio: 1.586,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              card.iconColor,
+              card.iconColor.withValues(alpha: 0.7),
+            ],
+          ),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(card.icon, color: Colors.white, size: 32),
+                const Icon(Icons.qr_code_2, color: Colors.white, size: 28),
+              ],
+            ),
+            Text(
+              card.title,
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+            Text(
+              card.subtitle,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 18,
+              ),
             ),
           ],
         ),
@@ -463,13 +562,6 @@ class CardDetailsExpandedScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: surfaceContainerLowestColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -597,60 +689,6 @@ class CardDetailsExpandedScreen extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           trailing,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddressBlock({
-    required String label,
-    required String value,
-    required Color onSurfaceColor,
-    required Color onSurfaceVariantColor,
-    required Color surfaceContainerLowestColor,
-    required Color primaryColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: surfaceContainerLowestColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: onSurfaceVariantColor,
-                    letterSpacing: 1.0,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: onSurfaceColor.withValues(alpha: 0.8),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.edit, color: primaryColor, size: 20),
-          ),
         ],
       ),
     );

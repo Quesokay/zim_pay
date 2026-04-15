@@ -18,6 +18,7 @@ namespace ZimPay.Presentation.Controllers
             _mediator = mediator;
         }
 
+        /*
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserCommand command)
         {
@@ -31,6 +32,7 @@ namespace ZimPay.Presentation.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        */
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(int id)

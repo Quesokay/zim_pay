@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace GoogleWalletClone.Infrastructure.Migrations
+namespace ZimPay.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -144,3 +144,4 @@ namespace GoogleWalletClone.Infrastructure.Migrations
         }
     }
 }
+

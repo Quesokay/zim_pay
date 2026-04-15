@@ -1,11 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using GoogleWalletClone.Application.DTOs;
-using GoogleWalletClone.Application.Interfaces;
-using GoogleWalletClone.Application.Queries;
+using ZimPay.Application.DTOs;
+using ZimPay.Application.Interfaces;
+using ZimPay.Application.Queries;
 
-namespace GoogleWalletClone.Application.Handlers.QueryHandlers
+namespace ZimPay.Application.Handlers.QueryHandlers
 {
     public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserDetailDto>
     {

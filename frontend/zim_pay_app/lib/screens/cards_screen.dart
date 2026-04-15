@@ -5,11 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 import '../blocs/wallet/wallet_bloc.dart';
 import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
+import '../blocs/user/user_bloc.dart';
 import '../models/wallet_item.dart';
 import 'transaction_history_screen.dart';
 import 'settings_screen.dart';
 import 'home_screen.dart';
 import 'add_to_wallet_screen.dart';
+import 'card_details_screen.dart';
 
 class CardsScreen extends StatefulWidget {
   const CardsScreen({super.key});
@@ -49,107 +51,135 @@ class _CardsScreenState extends State<CardsScreen> {
             return const Center(child: Text('Failed to load wallet items'));
           }
 
-          return Stack(
-            children: [
-              CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  // Top App Bar
-                  SliverAppBar(
-                    floating: true,
-                    pinned: true,
-                    backgroundColor: backgroundColor.withValues(alpha: 0.6),
-                    surfaceTintColor: Colors.transparent,
-                    elevation: 0,
-                    leading: IconButton(
-                      icon: const Icon(Icons.close, color: onSurfaceColor),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    title: Text(
-                      'Wallet',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: onSurfaceColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                    flexibleSpace: ClipRRect(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                        child: Container(color: Colors.transparent),
-                      ),
-                    ),
-                    actions: [
-                      IconButton(
-                        icon: const Icon(Icons.more_vert, color: Color(0xFF4285F4)),
-                        onPressed: () {},
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 16.0),
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                              image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuCT-KHpu57LQ66b3ZD40qcWUj5Fn48Rb7neqXOfWnUvwY7Lm5f6WrL-jDxP-7oFLZXdflj0hR5LuJl5KKQU-Jt3lTH7PFEN6HYeGnj0JGyUi92EdFpowpkxo1zwX3SOnUPqu18oj-GpGyLbb6n5D0iXj3c7FlwfAAVqKu7zai4CcynXRt4oEFW4KjrPpdAiD_G9Aog4tJRVTZHPptTbysHiHXP6jBf7PYMgjTwsIArc5B1TqaNPI_2hIbDqlqtDWkIaO7XiPHdJRIOy'),
-                              fit: BoxFit.cover,
-                            ),
+          return BlocBuilder<UserBloc, UserState>(
+            builder: (context, userState) {
+              final bool contactlessEnabled = userState is UserCreated ? userState.user.contactlessEnabled : true;
+
+              return Stack(
+                children: [
+                  CustomScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      // Top App Bar
+                      SliverAppBar(
+                        floating: true,
+                        pinned: true,
+                        backgroundColor: backgroundColor.withValues(alpha: 0.6),
+                        surfaceTintColor: Colors.transparent,
+                        elevation: 0,
+                        leading: IconButton(
+                          icon: const Icon(Icons.close, color: onSurfaceColor),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        title: Text(
+                          'Zim Pay',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: onSurfaceColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
                           ),
                         ),
+                        flexibleSpace: ClipRRect(
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                            child: Container(color: Colors.transparent),
+                          ),
+                        ),
+                        actions: [
+                          IconButton(
+                            icon: const Icon(Icons.more_vert, color: Color(0xFF4285F4)),
+                            onPressed: () {},
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 16.0),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuCT-KHpu57LQ66b3ZD40qcWUj5Fn48Rb7neqXOfWnUvwY7Lm5f6WrL-jDxP-7oFLZXdflj0hR5LuJl5KKQU-Jt3lTH7PFEN6HYeGnj0JGyUi92EdFpowpkxo1zwX3SOnUPqu18oj-GpGyLbb6n5D0iXj3c7FlwfAAVqKu7zai4CcynXRt4oEFW4KjrPpdAiD_G9Aog4tJRVTZHPptTbysHiHXP6jBf7PYMgjTwsIArc5B1TqaNPI_2hIbDqlqtDWkIaO7XiPHdJRIOy'),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
 
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        // Hero Section
-                        Column(
-                          children: [
-                            Text(
-                              'Pay with',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: outlineColor,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Select a card',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: onSurfaceColor,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: surfaceContainerLowColor,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.contactless, color: secondaryColor, size: 16),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Ready to tap',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: onSurfaceColor,
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            // Hero Section
+                            Column(
+                              children: [
+                                Text(
+                                  'Pay with',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    color: outlineColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Select a card',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: onSurfaceColor,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                if (contactlessEnabled)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: surfaceContainerLowColor,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.contactless, color: secondaryColor, size: 16),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Ready to tap',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: onSurfaceColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.not_interested, color: Colors.red, size: 16),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Contactless disabled',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: onSurfaceColor,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
                         const SizedBox(height: 40),
 
                         // Cards List
@@ -157,28 +187,50 @@ class _CardsScreenState extends State<CardsScreen> {
                           if (item is CreditCard) {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 16.0),
-                              child: _buildPaymentCard(
-                                title: item.bankName,
-                                subtitle: '•••• ${item.cardNumber.substring(item.cardNumber.length - 4)}',
-                                brand: item.bankName.contains('VISA') ? 'VISA' : 'Mastercard',
-                                brandColors: [item.primaryColor, item.secondaryColor],
-                                isDefault: state.walletItems.indexOf(item) == 0,
-                                isSelected: state.walletItems.indexOf(item) == 0,
-                                primaryColor: primaryColor,
-                                surfaceContainerLowestColor: surfaceContainerLowestColor,
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CardDetailsScreen(item: item),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: _buildPaymentCard(
+                                  title: item.bankName,
+                                  subtitle: '•••• ${item.cardNumber.substring(item.cardNumber.length - 4)}',
+                                  brand: item.bankName.contains('VISA') ? 'VISA' : 'Mastercard',
+                                  brandColors: [item.primaryColor, item.secondaryColor],
+                                  isDefault: state.walletItems.indexOf(item) == 0,
+                                  isSelected: state.walletItems.indexOf(item) == 0,
+                                  primaryColor: primaryColor,
+                                  surfaceContainerLowestColor: surfaceContainerLowestColor,
+                                ),
                               ),
                             );
                           } else if (item is TransitPass) {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 16.0),
-                              child: _buildGenericCard(
-                                title: item.title,
-                                subtitle: 'Balance: ${item.balance}',
-                                icon: Icons.train,
-                                iconColor: Colors.white,
-                                bgColor: item.primaryColor.withValues(alpha: 0.1),
-                                accentColor: item.primaryColor,
-                                label: 'Transit',
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CardDetailsScreen(item: item),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: _buildGenericCard(
+                                  title: item.title,
+                                  subtitle: 'Balance: ${item.balance}',
+                                  icon: Icons.train,
+                                  iconColor: Colors.white,
+                                  bgColor: item.primaryColor.withValues(alpha: 0.1),
+                                  accentColor: item.primaryColor,
+                                  label: 'Transit',
+                                ),
                               ),
                             );
                           }
@@ -267,6 +319,8 @@ class _CardsScreenState extends State<CardsScreen> {
                 ),
               ),
             ],
+              );
+            },
           );
         },
       ),

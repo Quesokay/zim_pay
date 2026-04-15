@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/user/user_bloc.dart';
 import 'home_screen.dart';
 import 'cards_screen.dart';
 import 'transaction_history_screen.dart';
@@ -13,8 +15,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _fingerprintEnabled = true;
-  bool _contactlessEnabled = true;
   bool _emailEnabled = false;
 
   @override
@@ -63,20 +63,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 2),
-                        image: const DecorationImage(
-                          image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuCisHnXI4U1Q2xGJkfUbGqKW_G7KJwkCDeX9JHlcQgC-UHAvT52_IsBXK7m_shH3k0yi_bGtBumF3AdmvObV7Mhf_yrp2HWXExSFvPuGZDfSN27lBYfjxC8ApInQgh03S17tj6ycZUrWZnHw3bqnzrY_4YQGvXELDlwkucdbCXRVBSDUnesbMoXvZxFxbW_15ZgBC7PfOezunEpDfRR3N3DMldjLqfYuRWzveZeDAJeq7JlDyz8Qng4LO9KTqqyI6OMxZC7b01Db_Vx'),
-                          fit: BoxFit.cover,
+                  BlocBuilder<UserBloc, UserState>(
+                    builder: (context, state) {
+                      String? avatarUrl;
+                      if (state is UserCreated) {
+                        avatarUrl = 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(state.user.name)}&background=random';
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16.0),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 2),
+                            image: avatarUrl != null
+                                ? DecorationImage(
+                                    image: NetworkImage(avatarUrl),
+                                    fit: BoxFit.cover,
+                                  )
+                                : const DecorationImage(
+                                    image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuCisHnXI4U1Q2xGJkfUbGqKW_G7KJwkCDeX9JHlcQgC-UHAvT52_IsBXK7m_shH3k0yi_bGtBumF3AdmvObV7Mhf_yrp2HWXExSFvPuGZDfSN27lBYfjxC8ApInQgh03S17tj6ycZUrWZnHw3bqnzrY_4YQGvXELDlwkucdbCXRVBSDUnesbMoXvZxFxbW_15ZgBC7PfOezunEpDfRR3N3DMldjLqfYuRWzveZeDAJeq7JlDyz8Qng4LO9KTqqyI6OMxZC7b01Db_Vx'),
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -86,30 +99,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // Hero Header
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'My Preferences',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
-                            color: onSurfaceColor,
-                            letterSpacing: -1.0,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Manage how you pay and secure your wallet.',
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: onSurfaceVariantColor,
-                          ),
-                        ),
-                      ],
+                    BlocBuilder<UserBloc, UserState>(
+                      builder: (context, state) {
+                        String name = 'Guest';
+                        if (state is UserCreated) {
+                          name = state.user.name;
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hello, $name',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w800,
+                                color: onSurfaceColor,
+                                letterSpacing: -1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Manage how you pay and secure your wallet.',
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: onSurfaceVariantColor,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 40),
+
+                    // Profile Group
+                    _buildSectionHeader('PROFILE', primaryColor),
+                    const SizedBox(height: 16),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: surfaceContainerLowestColor,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: BlocBuilder<UserBloc, UserState>(
+                        builder: (context, state) {
+                          String email = 'Not signed in';
+                          if (state is UserCreated) {
+                            email = state.user.email;
+                          }
+                          return Column(
+                            children: [
+                              _buildClickableItem(
+                                icon: Icons.person,
+                                title: 'Personal Information',
+                                subtitle: 'Manage your name and phone number',
+                                onSurfaceColor: onSurfaceColor,
+                                onSurfaceVariantColor: onSurfaceVariantColor,
+                                surfaceContainerHighColor: surfaceContainerHighColor,
+                                outlineVariantColor: outlineVariantColor,
+                                onTap: () => _showEditProfileDialog(context),
+                              ),
+                              _buildReadOnlyItem(
+                                icon: Icons.alternate_email,
+                                title: 'Email address',
+                                subtitle: email,
+                                onSurfaceColor: onSurfaceColor,
+                                onSurfaceVariantColor: onSurfaceVariantColor,
+                                surfaceContainerHighColor: surfaceContainerHighColor,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 32),
 
                     // Security Group
                     _buildSectionHeader('SECURITY', primaryColor),
@@ -120,29 +183,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       padding: const EdgeInsets.all(8),
-                      child: Column(
-                        children: [
-                          _buildSwitchItem(
-                            icon: Icons.fingerprint,
-                            title: 'Fingerprint unlock',
-                            subtitle: 'Require biometric to view or use cards',
-                            value: _fingerprintEnabled,
-                            onChanged: (val) => setState(() => _fingerprintEnabled = val),
-                            primaryColor: primaryColor,
-                            onSurfaceColor: onSurfaceColor,
-                            onSurfaceVariantColor: onSurfaceVariantColor,
-                          ),
-                          _buildSwitchItem(
-                            icon: Icons.contactless,
-                            title: 'Contactless payments',
-                            subtitle: 'Tap to pay with NFC enabled cards',
-                            value: _contactlessEnabled,
-                            onChanged: (val) => setState(() => _contactlessEnabled = val),
-                            primaryColor: primaryColor,
-                            onSurfaceColor: onSurfaceColor,
-                            onSurfaceVariantColor: onSurfaceVariantColor,
-                          ),
-                        ],
+                      child: BlocBuilder<UserBloc, UserState>(
+                        builder: (context, state) {
+                          final bool fingerprintEnabled = state is UserCreated ? state.user.fingerprintEnabled : true;
+                          final bool contactlessEnabled = state is UserCreated ? state.user.contactlessEnabled : true;
+
+                          return Column(
+                            children: [
+                              _buildSwitchItem(
+                                icon: Icons.fingerprint,
+                                title: 'Fingerprint unlock',
+                                subtitle: 'Require biometric to view or use cards',
+                                value: fingerprintEnabled,
+                                onChanged: (val) {
+                                  context.read<UserBloc>().add(UpdateUserEvent(fingerprintEnabled: val));
+                                },
+                                primaryColor: primaryColor,
+                                onSurfaceColor: onSurfaceColor,
+                                onSurfaceVariantColor: onSurfaceVariantColor,
+                              ),
+                              _buildSwitchItem(
+                                icon: Icons.contactless,
+                                title: 'Contactless payments',
+                                subtitle: 'Tap to pay with NFC enabled cards',
+                                value: contactlessEnabled,
+                                onChanged: (val) {
+                                  context.read<UserBloc>().add(UpdateUserEvent(contactlessEnabled: val));
+                                },
+                                primaryColor: primaryColor,
+                                onSurfaceColor: onSurfaceColor,
+                                onSurfaceVariantColor: onSurfaceVariantColor,
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -208,7 +282,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     // Version
                     Center(
                       child: Text(
-                        'GOOGLE WALLET v24.12.8',
+                        'ZIM PAY v24.12.8',
                         style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -365,9 +439,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required Color onSurfaceVariantColor,
     required Color surfaceContainerHighColor,
     required Color outlineVariantColor,
+    VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -408,6 +483,99 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Icon(Icons.chevron_right, color: outlineVariantColor, size: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color onSurfaceColor,
+    required Color onSurfaceVariantColor,
+    required Color surfaceContainerHighColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: surfaceContainerHighColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: onSurfaceVariantColor, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    color: onSurfaceColor,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(
+                    color: onSurfaceVariantColor,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditProfileDialog(BuildContext context) {
+    final userState = context.read<UserBloc>().state;
+    if (userState is! UserCreated) return;
+
+    final nameController = TextEditingController(text: userState.user.name);
+    final phoneController = TextEditingController(text: userState.user.phone);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            TextField(
+              controller: phoneController,
+              decoration: const InputDecoration(labelText: 'Phone'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              context.read<UserBloc>().add(UpdateUserEvent(
+                name: nameController.text,
+                phone: phoneController.text,
+              ));
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }
