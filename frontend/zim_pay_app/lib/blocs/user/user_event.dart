@@ -25,17 +25,28 @@ class CreateUserEvent extends UserEvent {
   List<Object> get props => [email, name, phone];
 }
 
+class SetUserEvent extends UserEvent {
+  final User user;
+
+  SetUserEvent(this.user);
+
+  @override
+  List<Object> get props => [user];
+}
+
 class UpdateUserEvent extends UserEvent {
   final String? name;
   final String? phone;
   final bool? fingerprintEnabled;
   final bool? contactlessEnabled;
+  final double? tapLimit;
 
   UpdateUserEvent({
     this.name,
     this.phone,
     this.fingerprintEnabled,
     this.contactlessEnabled,
+    this.tapLimit,
   });
 
   @override
@@ -44,5 +55,6 @@ class UpdateUserEvent extends UserEvent {
         phone ?? '',
         fingerprintEnabled ?? '',
         contactlessEnabled ?? '',
+        tapLimit ?? '',
       ];
 }

@@ -67,6 +67,14 @@ namespace ZimPay.Infrastructure.Repositories
             return await _context.Transactions.CountAsync(t => t.UserId == userId);
         }
 
+        public async Task<IEnumerable<Transaction>> GetPendingByUserIdAsync(int userId)
+        {
+            return await _context.Transactions
+                .Where(t => t.UserId == userId && t.Status == "Pending")
+                .OrderByDescending(t => t.Date)
+                .ToListAsync();
+        }
+
         public async Task AddAsync(Transaction transaction)
         {
             _context.Transactions.Add(transaction);

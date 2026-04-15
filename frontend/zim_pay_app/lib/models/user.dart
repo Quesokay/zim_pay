@@ -4,6 +4,7 @@ class User {
   final String name;
   final String phone;
   final double balance;
+  final double tapLimit;
   final bool fingerprintEnabled;
   final bool contactlessEnabled;
 
@@ -13,6 +14,7 @@ class User {
     required this.name,
     required this.phone,
     required this.balance,
+    this.tapLimit = 50.0,
     this.fingerprintEnabled = true,
     this.contactlessEnabled = true,
   });
@@ -24,6 +26,7 @@ class User {
       name: json['name'],
       phone: json['phone'],
       balance: (json['balance'] as num).toDouble(),
+      tapLimit: (json['tapLimit'] as num?)?.toDouble() ?? 50.0,
       fingerprintEnabled: json['fingerprintEnabled'] ?? true,
       contactlessEnabled: json['contactlessEnabled'] ?? true,
     );
@@ -35,6 +38,7 @@ class User {
     String? name,
     String? phone,
     double? balance,
+    double? tapLimit,
     bool? fingerprintEnabled,
     bool? contactlessEnabled,
   }) {
@@ -44,6 +48,7 @@ class User {
       name: name ?? this.name,
       phone: phone ?? this.phone,
       balance: balance ?? this.balance,
+      tapLimit: tapLimit ?? this.tapLimit,
       fingerprintEnabled: fingerprintEnabled ?? this.fingerprintEnabled,
       contactlessEnabled: contactlessEnabled ?? this.contactlessEnabled,
     );

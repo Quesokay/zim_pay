@@ -144,7 +144,7 @@ class _AddLoyaltyScreenState extends State<AddLoyaltyScreen> {
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         final userState = context.read<UserBloc>().state;
-                        final userId = (userState is UserCreated) ? userState.user.id : 1;
+                        final userId = (userState as UserCreated).user.id;
 
                         context.read<WalletBloc>().add(
                           AddManualCard(

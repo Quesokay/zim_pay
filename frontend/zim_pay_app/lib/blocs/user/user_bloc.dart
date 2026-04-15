@@ -13,6 +13,11 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<CreateUserEvent>(_onCreateUser);
     on<LoginEvent>(_onLogin);
     on<UpdateUserEvent>(_onUpdateUser);
+    on<SetUserEvent>(_onSetUser);
+  }
+
+  void _onSetUser(SetUserEvent event, Emitter<UserState> emit) {
+    emit(UserCreated(event.user));
   }
 
   Future<void> _onUpdateUser(UpdateUserEvent event, Emitter<UserState> emit) async {
@@ -26,6 +31,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           phone: event.phone,
           fingerprintEnabled: event.fingerprintEnabled,
           contactlessEnabled: event.contactlessEnabled,
+          tapLimit: event.tapLimit,
         );
         emit(UserCreated(updatedUser));
       } catch (e) {

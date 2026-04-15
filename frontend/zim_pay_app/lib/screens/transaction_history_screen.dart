@@ -25,12 +25,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void initState() {
     super.initState();
     final userState = context.read<UserBloc>().state;
-    if (userState is UserCreated) {
-      context.read<TransactionBloc>().add(LoadTransactions(userId: userState.user.id));
-    } else {
-      // Fallback for development if no user is logged in
-      context.read<TransactionBloc>().add(const LoadTransactions(userId: 1));
-    }
+    final userId = (userState as UserCreated).user.id;
+    context.read<TransactionBloc>().add(LoadTransactions(userId: userId));
+    context.read<TransactionBloc>().add(LoadPendingTransactions(userId: userId));
   }
 
   @override
@@ -75,16 +72,32 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     centerTitle: false,
                     title: Row(
                       children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                              image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuAYfFXKaczaU_MLOrAynBaAJoM1Zduo-oNi8Jw79VJw5GdWkT-lnAo-CxKmeFeguZF6KyojiYXDElZ4UWHKvuYNNzJwRF_i9EFYf4JhGLsdxon09zDl9_HXX3f5UXIx6jixS4H9R7Ph7ZCBQ4LlkonECPjY_rfcinPqh3SFEGUgGGwGT9wMbLIL7zBUYq16ejxTr95zCZfVjvMmIfFbg5gvbhwwvmaXB__MMcNqXtbPQz2ge1WA3kPHE4kUIW0ReEkqb_o2wfDSZGU1'),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                        BlocBuilder<UserBloc, UserState>(
+                          builder: (context, userState) {
+                            String name = 'Guest';
+                            if (userState is UserCreated) {
+                              name = userState.user.name;
+                            }
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                                );
+                              },
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: NetworkImage('https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(width: 12),
                         Text(
@@ -170,7 +183,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           ),
                           padding: const EdgeInsets.all(8),
                           child: Column(
-                            children: state.transactions.map((tx) {
+                            children: [
+                              ...state.pendingTransactions,
+                              ...state.transactions,
+                            ].map((tx) {
                               return _buildTransactionItemFromModel(
                                 tx,
                                 onSurfaceColor: onSurfaceColor,

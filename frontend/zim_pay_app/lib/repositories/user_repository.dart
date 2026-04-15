@@ -59,12 +59,13 @@ class UserRepository {
     }
   }
 
-  Future<User> updateUser(int id, {String? name, String? phone, bool? fingerprintEnabled, bool? contactlessEnabled}) async {
+  Future<User> updateUser(int id, {String? name, String? phone, bool? fingerprintEnabled, bool? contactlessEnabled, double? tapLimit}) async {
     final Map<String, dynamic> updateData = {};
     if (name != null) updateData['name'] = name;
     if (phone != null) updateData['phone'] = phone;
     if (fingerprintEnabled != null) updateData['fingerprintEnabled'] = fingerprintEnabled;
     if (contactlessEnabled != null) updateData['contactlessEnabled'] = contactlessEnabled;
+    if (tapLimit != null) updateData['tapLimit'] = tapLimit;
 
     final response = await http.patch(
       Uri.parse('$baseUrl/User/$id'),

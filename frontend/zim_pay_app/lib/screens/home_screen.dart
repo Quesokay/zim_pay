@@ -1,10 +1,19 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
+import '../services/biometric_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import '../constants.dart';
 import '../blocs/wallet/wallet_bloc.dart';
 import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
+import '../blocs/transaction/transaction_bloc.dart';
+import '../blocs/transaction/transaction_event.dart';
+import '../blocs/transaction/transaction_state.dart';
+import '../blocs/user/user_bloc.dart';
 import '../models/wallet_item.dart';
 import 'add_to_wallet_screen.dart';
 import 'card_details_screen.dart';
@@ -29,22 +38,39 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(viewportFraction: 0.9);
-    _pageController.addListener(() {
-      if (_pageController.hasClients && _pageController.page != null) {
-        int next = _pageController.page!.round();
-        if (_currentPage != next) {
-          setState(() {
-            _currentPage = next;
-          });
-        }
-      }
-    });
+    _pageController.addListener(_onPageChange);
 
-    context.read<WalletBloc>().add(LoadWalletItems());
+    // Load initial wallet and transactions
+    _initialLoad();
+  }
+
+  void _onPageChange() {
+    if (_pageController.hasClients && _pageController.page != null) {
+      int next = _pageController.page!.round();
+      if (_currentPage != next) {
+        setState(() {
+          _currentPage = next;
+        });
+      }
+    }
+  }
+
+  void _initialLoad() {
+    final userState = context.read<UserBloc>().state;
+    final userId = (userState as UserCreated).user.id;
+    context.read<WalletBloc>().add(LoadWalletItems(userId: userId));
+    _loadPendingTransactions();
+  }
+
+  void _loadPendingTransactions() {
+    final userState = context.read<UserBloc>().state;
+    final userId = (userState as UserCreated).user.id;
+    context.read<TransactionBloc>().add(LoadPendingTransactions(userId: userId));
   }
 
   @override
   void dispose() {
+    _pageController.removeListener(_onPageChange);
     _pageController.dispose();
     super.dispose();
   }
@@ -62,23 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: surfaceColor,
       extendBody: true,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const MerchantPosScreen()),
-          );
-        },
-        icon: const Icon(Icons.point_of_sale),
-        label: const Text('POS Test'),
-        backgroundColor: Colors.redAccent, // Making it red so you remember to delete it later!
-      ),
       body: BlocBuilder<WalletBloc, WalletState>(
         builder: (context, state) {
-          debugPrint('HomeScreen: BlocBuilder state status: ${state.status}');
-          debugPrint('HomeScreen: Wallet items: ${state.walletItems.length}');
-          debugPrint('HomeScreen: Loyalty cards: ${state.loyaltyCards.length}');
-
           if (state.status == WalletStatus.loading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -89,11 +100,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return Stack(
             children: [
-              // Content
+              // Main Scrollable Content
               CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  // TopAppBar Replacement
+                  // TopAppBar
                   SliverAppBar(
                     floating: true,
                     pinned: false,
@@ -118,34 +129,98 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontSize: 20,
                           ),
                         ),
-                      ],
-                    ),
-                    actions: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 16.0),
-                        child: GestureDetector(
-                          onTap: () {},
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const MerchantPosScreen()),
+                            );
+                          },
                           child: Container(
-                            width: 40,
-                            height: 40,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: surfaceContainerHighestColor, width: 2),
-                              image: const DecorationImage(
-                                image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuAwoAnnfoWPW2M-GLu9RqSQf3lGzy4vTTw0OGy10mltKjAOUHc1kQQyYk3Jg5n_6poyEmFs8DMwh2kLpDaDCGXOkN347WuqvuhGdY3K8T1-J8_06xKppD1mCqvfV4UtJ3vzThtzfmi4BktEWfkW2eK6_2PLp3E6WbzGE-QH9EMaMWEDkThw_PoiKOICzQ-ysgiNEWn8f0zTS6THPDp5MWD8hnsRIcIxGNeYJTufTjpvfnGj2oeQGrw70yIRAPA_S4rBKLA_LjRCe6Kv'),
-                                fit: BoxFit.cover,
-                              ),
+                              color: Colors.redAccent.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.point_of_sale, color: Colors.redAccent, size: 14),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'POS Test',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.redAccent,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
+                      ],
+                    ),
+                    actions: [
+                      BlocBuilder<UserBloc, UserState>(
+                        builder: (context, userState) {
+                          String name = 'Guest';
+                          if (userState is UserCreated) {
+                            name = userState.user.name;
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 16.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                                );
+                              },
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: surfaceContainerHighestColor, width: 2),
+                                  image: DecorationImage(
+                                    image: NetworkImage('https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
 
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
+                        // ✨ FLOATING PENDING TRANSACTION ALERT ✨
+                        BlocBuilder<TransactionBloc, TransactionState>(
+                          builder: (context, txState) {
+                            if (txState.pendingTransactions.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Column(
+                              children: txState.pendingTransactions.map((tx) {
+                                return _buildPendingTransactionCard(
+                                  int.parse(tx.id),
+                                  tx.amount,
+                                  tx.title,
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+
                         // Hero Carousel Section
                         if (state.walletItems.isNotEmpty)
                           SizedBox(
@@ -182,6 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         if (state.walletItems.isNotEmpty) const SizedBox(height: 12),
+
                         // Carousel Pagination
                         if (state.walletItems.isNotEmpty)
                           Row(
@@ -375,11 +451,127 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+
+              // Removing floating notification since it is now in the list
             ],
           );
         },
       ),
     );
+  }
+
+  Widget _buildPendingTransactionCard(int transactionId, double amount, String merchantName) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4E5), // Soft warning orange
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFFB020).withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFB020).withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.fingerprint, color: Color(0xFFB27B16)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Approval Required',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: const Color(0xFF8A5A00)),
+                ),
+                Text(
+                  '\$${amount.toStringAsFixed(2)} at $merchantName',
+                  style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF8A5A00)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => _executeFingerprintApproval(transactionId, amount),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFB020),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Review'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _executeFingerprintApproval(int transactionId, double amount) async {
+    // 1. Trigger the native Fingerprint / FaceID scanner
+    bool isAuthorized = await BiometricService.authenticate(
+      context,
+      'Authorize payment of \$${amount.toStringAsFixed(2)}',
+    );
+
+    if (!mounted) return;
+
+    if (isAuthorized) {
+      // 2. The user successfully scanned their fingerprint! 
+      // Now we tell the C# backend to release the funds.
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+      try {
+        final url = Uri.parse('${ApiConstants.baseUrl}/Transaction/$transactionId/approve');
+        final response = await http.post(url);
+
+        if (!mounted) return;
+        Navigator.pop(context); // Remove loading spinner
+
+        if (response.statusCode == 200) {
+          // Success!
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Payment Approved Successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Refresh state
+          int userId = 1;
+          final userState = context.read<UserBloc>().state;
+          if (userState is UserCreated) {
+            userId = userState.user.id;
+          }
+          context.read<TransactionBloc>().add(LoadPendingTransactions(userId: userId));
+          context.read<TransactionBloc>().add(LoadTransactions(userId: userId));
+          context.read<WalletBloc>().add(LoadWalletItems(userId: userId));
+
+        } else { // Handled backend error (e.g., Insufficient funds)
+          final error = jsonDecode(response.body)['message'];
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('❌ Decline: $error'), backgroundColor: Colors.red),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Network error. Try again.')),
+        );
+      }
+    } else {
+      // 3. User cancelled the fingerprint prompt or it failed
+      debugPrint('Fingerprint cancelled by user.');
+    }
   }
 
   Widget _buildWalletItemCard(BuildContext context, WalletItem item) {
@@ -419,11 +611,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLoyaltyItemFromModel(
-    LoyaltyCard card, {
-    required Color onSurfaceColor,
-    required Color onSurfaceVariantColor,
-    required Color surfaceContainerLowestColor,
-  }) {
+      LoyaltyCard card, {
+        required Color onSurfaceColor,
+        required Color onSurfaceVariantColor,
+        required Color surfaceContainerLowestColor,
+      }) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -676,9 +868,9 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: isActive
               ? BoxDecoration(
-                  color: const Color(0xFFD3E3FD),
-                  borderRadius: BorderRadius.circular(30),
-                )
+            color: const Color(0xFFD3E3FD),
+            borderRadius: BorderRadius.circular(30),
+          )
               : null,
           child: Column(
             mainAxisSize: MainAxisSize.min,

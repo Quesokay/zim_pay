@@ -13,6 +13,7 @@ namespace ZimPay.Domain
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
+        public decimal TapLimit { get; set; } = 50.00m;
 
         // Navigation properties
         public ICollection<PaymentMethod> PaymentMethods { get; set; } = new List<PaymentMethod>();

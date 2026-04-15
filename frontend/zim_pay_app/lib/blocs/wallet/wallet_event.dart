@@ -7,7 +7,14 @@ abstract class WalletEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadWalletItems extends WalletEvent {}
+class LoadWalletItems extends WalletEvent {
+  final int userId;
+
+  LoadWalletItems({required this.userId});
+
+  @override
+  List<Object?> get props => [userId];
+}
 
 class AddManualCard extends WalletEvent {
   final int userId;
@@ -27,4 +34,24 @@ class AddPass extends WalletEvent {
 
   @override
   List<Object?> get props => [userId, passDetails];
+}
+
+class DeleteWalletItem extends WalletEvent {
+  final int userId;
+  final String paymentMethodId;
+
+  DeleteWalletItem({required this.userId, required this.paymentMethodId});
+
+  @override
+  List<Object?> get props => [userId, paymentMethodId];
+}
+
+class DeletePass extends WalletEvent {
+  final int userId;
+  final String passId;
+
+  DeletePass({required this.userId, required this.passId});
+
+  @override
+  List<Object?> get props => [userId, passId];
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../blocs/user/user_bloc.dart';
 import '../blocs/wallet/wallet_bloc.dart';
 import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
@@ -49,16 +50,6 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     }
   }
 
-  void _handleSuccessfulVerification(CreatePaymentMethodDto cardDto) {
-    if (mounted) {
-      // Close the OTP Dialog
-      Navigator.of(context, rootNavigator: true).pop();
-
-      debugPrint('🚀 [UI] Dispatching AddManualCard event to WalletBloc...');
-      _saveCardToBackend(cardDto);
-    }
-  }
-
   @override
   void dispose() {
     _cardNumberController.dispose();
@@ -66,6 +57,18 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     _cvvController.dispose();
     _holderController.dispose();
     super.dispose();
+  }
+
+  void _handleSuccessfulVerification(CreatePaymentMethodDto cardDto) {
+    if (mounted) {
+      // Close the OTP Dialog if it's open
+      if (Navigator.canPop(context)) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+
+      debugPrint('🚀 [UI] Dispatching AddManualCard event to WalletBloc...');
+      _saveCardToBackend(cardDto);
+    }
   }
 
   @override
@@ -295,7 +298,6 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   }
 
   // 1. The Phone Auth Flow
-  // 1. The Phone Auth Flow
   Future<void> _startPhoneVerification(CreatePaymentMethodDto cardDto) async {
     const testPhoneNumber = '+15555555555';
 
@@ -386,7 +388,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                 await FirebaseAuth.instance.signInWithCredential(credential);
 
                 debugPrint('✅ [UI] Firebase verification SUCCESS!');
-                if (mounted) {
+                if (context.mounted) {
                   _handleSuccessfulVerification(cardDto);
                 }
               } catch (e) {
@@ -396,12 +398,12 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                     FirebaseAuth.instance.currentUser != null) {
 
                   debugPrint('⚠️ [UI] Caught Pigeon type-cast bug, but User exists. Proceeding...');
-                  if (mounted) {
+                  if (context.mounted) {
                     _handleSuccessfulVerification(cardDto);
                   }
                 } else {
                   debugPrint('❌ [UI] Firebase verification FAILED: $e');
-                  if (mounted) {
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Invalid Code. Please try again.')),
                     );
@@ -418,8 +420,11 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
   // 3. The actual save function (extracted from your old button logic)
   void _saveCardToBackend(CreatePaymentMethodDto cardDto) {
+    final userState = context.read<UserBloc>().state;
+    final userId = (userState as UserCreated).user.id;
+
     context.read<WalletBloc>().add(
-        AddManualCard(userId: 1, cardDetails: cardDto)
+        AddManualCard(userId: userId, cardDetails: cardDto)
     );
   }
 

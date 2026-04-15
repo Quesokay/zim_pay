@@ -16,6 +16,7 @@ namespace ZimPay.Application.Interfaces
         Task AddAsync(Transaction transaction);
         Task UpdateAsync(Transaction transaction);
         Task DeleteAsync(int id);
+        Task<IEnumerable<Transaction>> GetPendingByUserIdAsync(int userId);
         Task SaveChangesAsync();
     }
 }

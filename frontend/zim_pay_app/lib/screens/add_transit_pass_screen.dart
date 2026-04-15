@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../blocs/user/user_bloc.dart';
 import '../blocs/wallet/wallet_bloc.dart';
 import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
@@ -149,9 +150,12 @@ class _AddTransitPassScreenState extends State<AddTransitPassScreen> {
                           color: "#006A2B",
                         );
 
+                        final userState = context.read<UserBloc>().state;
+                        final userId = (userState as UserCreated).user.id;
+
                         context.read<WalletBloc>().add(
                           AddPass(
-                            userId: 1, // Hardcoded for dev
+                            userId: userId,
                             passDetails: passDto,
                           ),
                         );

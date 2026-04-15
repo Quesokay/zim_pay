@@ -105,29 +105,67 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        // SUCCESS!
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Payment Approved ✅'),
-            content: Text('Successfully charged \$$amount to ZimPay Card.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _amountController.clear();
-                    _statusMessage = 'Enter amount and press "Ready to Charge"';
-                  });
-                },
-                child: const Text('New Transaction'),
-              )
-            ],
-          ),
-        );
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final bool isSuccess = data['success'] ?? false;
+        final responseData = data['data'];
+
+        if (isSuccess) {
+          if (responseData is Map && responseData['biometricRequired'] == true) {
+            // BIOMETRIC REQUIRED!
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Row(
+                  children: [
+                    Icon(Icons.fingerprint, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('Approval Required'),
+                  ],
+                ),
+                content: Text('The transaction for \$$amount exceeds the tap limit. Please approve it on the user\'s phone.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        _amountController.clear();
+                        _statusMessage = 'Awaiting User Approval...';
+                      });
+                    },
+                    child: const Text('OK'),
+                  )
+                ],
+              ),
+            );
+          } else {
+            // FULL SUCCESS!
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Payment Approved ✅'),
+                content: Text('Successfully charged \$$amount to ZimPay Card.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        _amountController.clear();
+                        _statusMessage = 'Enter amount and press "Ready to Charge"';
+                      });
+                    },
+                    child: const Text('New Transaction'),
+                  )
+                ],
+              ),
+            );
+          }
+        } else {
+          _handleError(data['message'] ?? 'Payment Declined by Bank.');
+        }
       } else {
         // DECLINED OR FAILED
-        _handleError('Payment Declined by Bank.');
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        _handleError(data['message'] ?? 'Payment Declined by Bank.');
       }
     } catch (e) {
       _handleError('Network error connecting to payment server.');
