@@ -41,6 +41,9 @@ bld/
 *.sln.iml
 *.iml
 
+# Db
+*.db
+
 # User-specific files
 appsettings.Development.json
 appsettings.Local.json
