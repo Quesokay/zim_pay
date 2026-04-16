@@ -366,7 +366,7 @@ class _PassesLoyaltyScreenState extends State<PassesLoyaltyScreen> {
       flight: 'Transit Pass',
       fromCode: 'BAL',
       fromCity: 'Balance',
-      toCode: pass.balance,
+      toCode: '\$${pass.balance.toStringAsFixed(2)}',
       toCity: 'Available',
       duration: 'Unlimited',
       primaryColor: pass.primaryColor,

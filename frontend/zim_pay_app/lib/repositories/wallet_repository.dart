@@ -143,4 +143,16 @@ class WalletRepository {
       throw Exception('Failed to delete pass');
     }
   }
+
+  Future<void> setDefaultPaymentMethod(int userId, String paymentMethodId) async {
+    final url = '$baseUrl/PaymentMethod/$paymentMethodId/default?userId=$userId';
+    developer.log('WALLET_REPO: Setting default PM at: $url');
+    final response = await http.patch(Uri.parse(url));
+
+    developer.log('WALLET_REPO: SetDefaultPaymentMethod response: ${response.statusCode}');
+    if (response.statusCode != 200) {
+      developer.log('WALLET_REPO: Failed to set default PM: ${response.body}');
+      throw Exception('Failed to set default payment method');
+    }
+  }
 }
