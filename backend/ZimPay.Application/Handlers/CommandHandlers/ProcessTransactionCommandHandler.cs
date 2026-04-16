@@ -28,80 +28,62 @@ namespace ZimPay.Application.Handlers.CommandHandlers
             _userRepository = userRepository;
         }
 
-        public async Task<bool> Handle(ProcessTransactionCommand request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(ProcessTransactionCommand request, CancellationToken cancellationToken)
         {
             _logger.LogInformation("💳 [POS] Received transaction request for ${Amount}", request.Amount);
 
-            // 1. Find the card tied to this NFC tag
-            var paymentMethod = await _paymentMethodRepository.GetByTokenAsync(request.DigitalToken);
-            
-            if (paymentMethod == null || !paymentMethod.IsActive)
-            {
-                _logger.LogWarning("❌ [POS] Transaction declined: Invalid or deactivated NFC token.");
-                throw new InvalidOperationException("Transaction Declined: Invalid or deactivated NFC card.");
-            }
+            // 1. Find the token/tag that was tapped
+            var nfcToken = await _paymentMethodRepository.GetByTokenAsync(request.DigitalToken);
+            if (nfcToken == null || !nfcToken.IsActive)
+                throw new InvalidOperationException("Transaction Declined: Invalid NFC tag.");
 
-            // 2. Fetch the User and Check Balance
-            var user = await _userRepository.GetByIdAsync(paymentMethod.UserId);
-            if (user == null)
-            {
-                _logger.LogWarning("❌ [POS] Transaction declined: User not found.");
-                throw new InvalidOperationException("Transaction Declined: User account not found.");
-            }
+            var user = await _userRepository.GetByIdAsync(nfcToken.UserId);
 
-            // ✨ THE BALANCE CHECK ✨
-            if (user.Balance < request.Amount)
-            {
-                _logger.LogWarning("❌ [POS] Transaction Declined: Insufficient Funds. Wallet Balance: ${Balance}, Requested: ${Amount}", user.Balance, request.Amount);
-                throw new InvalidOperationException("Transaction Declined: Insufficient funds in ZimPay Wallet.");
-            }
+            // 2. ✨ THE "DIGITAL CUSTODIAN" ROUTING ✨
+            // Find the user's active/default payment method to charge
+            var allCards = await _paymentMethodRepository.GetByUserIdAsync(user.Id);
+            var activeCard = allCards.FirstOrDefault(c => c.IsDefault && c.IsActive);
 
-            // ✨ THE NEW BIOMETRIC LIMIT CHECK ✨
+            if (activeCard == null)
+                throw new InvalidOperationException("Transaction Declined: No active default payment method selected.");
+
+            // 3. Check Balance on the specific card
+            if (activeCard.Balance < request.Amount)
+                throw new InvalidOperationException($"Transaction Declined: Insufficient funds on {activeCard.BankName}.");
+
+            // 4. Biometric Limit Check
             if (request.Amount > user.TapLimit)
             {
-                _logger.LogWarning("⚠️ [POS] Amount ${Amount} exceeds user limit of ${Limit}. Requiring Biometrics.", request.Amount, user.TapLimit);
-                
-                // 1. Save it as PENDING so the user's phone can see it
                 var pendingTransaction = new Transaction
                 {
-                    UserId = paymentMethod.UserId,
-                    PaymentMethodId = paymentMethod.Id,
+                    UserId = user.Id,
+                    PaymentMethodId = activeCard.Id, // Link to the specific card
                     Amount = request.Amount,
                     Type = "Payment",
-                    Status = "Pending", // IMPORTANT: It is not completed yet!
+                    Status = "Pending",
                     Date = DateTime.UtcNow,
                     Description = "ZimPay Tap-to-Pay POS"
                 };
                 await _transactionRepository.AddAsync(pendingTransaction);
-
-                // 2. Throw a specific error code so the API Controller knows what happened.
-                // We pass the new Transaction ID so the phone knows exactly which one to approve.
                 throw new InvalidOperationException($"BIOMETRIC_REQUIRED:{pendingTransaction.Id}");
             }
 
-            // 3. Deduct the Funds & Save
-            user.Balance -= request.Amount;
-            
-            // Make sure you have added UpdateAsync to your IUserRepository and UserRepository!
-            await _userRepository.UpdateAsync(user);
+            // 5. Auto-Approve & Deduct
+            activeCard.DeductFunds(request.Amount);
+            await _paymentMethodRepository.UpdateAsync(activeCard); // Update the card's balance
 
-            // 4. Create the Transaction Record
             var transaction = new Transaction
             {
-                UserId = paymentMethod.UserId,
-                PaymentMethodId = paymentMethod.Id,
+                UserId = user.Id,
+                PaymentMethodId = activeCard.Id,
                 Amount = request.Amount,
                 Type = "Payment",
                 Status = "Completed",
                 Date = DateTime.UtcNow,
                 Description = "ZimPay Tap-to-Pay POS"
             };
-
             await _transactionRepository.AddAsync(transaction);
             
-            _logger.LogInformation("✅ [POS] SUCCESS! Charged ${Amount} to User {UserId}. New Balance: ${Balance}", 
-                request.Amount, paymentMethod.UserId, user.Balance);
-
             return true;
         }
     }

@@ -13,59 +13,42 @@ namespace ZimPay.Application.Handlers.CommandHandlers
         private readonly ITransactionRepository _transactionRepository;
         private readonly IUserRepository _userRepository;
         private readonly ILogger<ApproveTransactionCommandHandler> _logger;
+        private readonly IPaymentMethodRepository _paymentMethodRepository;
 
         public ApproveTransactionCommandHandler(
             ITransactionRepository transactionRepository,
             IUserRepository userRepository,
-            ILogger<ApproveTransactionCommandHandler> logger)
+            ILogger<ApproveTransactionCommandHandler> logger,
+            IPaymentMethodRepository paymentMethodRepository)
         {
             _transactionRepository = transactionRepository;
             _userRepository = userRepository;
             _logger = logger;
+            _paymentMethodRepository = paymentMethodRepository;
         }
 
         public async Task<bool> Handle(ApproveTransactionCommand request, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("✅ [API] Approving pending transaction ID: {TransactionId}", request.TransactionId);
-
-            // 1. Fetch the pending transaction
             var transaction = await _transactionRepository.GetByIdAsync(request.TransactionId);
-            if (transaction == null)
-            {
-                _logger.LogWarning("❌ [API] Transaction {Id} not found.", request.TransactionId);
-                throw new InvalidOperationException("Transaction not found.");
-            }
+            if (transaction == null || transaction.Status != "Pending")
+                throw new InvalidOperationException("Invalid or already processed transaction.");
 
-            if (transaction.Status != "Pending")
-            {
-                _logger.LogWarning("❌ [API] Transaction {Id} is already {Status}.", request.TransactionId, transaction.Status);
-                throw new InvalidOperationException("Transaction already processed.");
-            }
+            // 1. Fetch the specific card tied to this pending transaction
+            var activeCard = await _paymentMethodRepository.GetByIdAsync(transaction.PaymentMethodId.Value);
+            
+            if (activeCard == null)
+                throw new InvalidOperationException("Payment method not found.");
 
-            // 2. Fetch the user
-            var user = await _userRepository.GetByIdAsync(transaction.UserId);
-            if (user == null)
-            {
-                _logger.LogWarning("❌ [API] User {UserId} for transaction {Id} not found.", transaction.UserId, request.TransactionId);
-                throw new InvalidOperationException("User not found.");
-            }
+            // 2. Deduct from the card
+            activeCard.DeductFunds(transaction.Amount);
+            await _paymentMethodRepository.UpdateAsync(activeCard);
 
-            // 3. Deduct the funds
-            if (user.Balance < transaction.Amount)
-            {
-                _logger.LogWarning("❌ [API] User {UserId} has insufficient funds for transaction {Id}.", transaction.UserId, request.TransactionId);
-                throw new InvalidOperationException("Insufficient funds.");
-            }
-
-            user.Balance -= transaction.Amount;
-            await _userRepository.UpdateAsync(user);
-
-            // 4. Mark as completed
+            // 3. Complete transaction
             transaction.Status = "Completed";
             await _transactionRepository.UpdateAsync(transaction);
 
-            _logger.LogInformation("✅ [API] Transaction {Id} approved and completed. New Balance: ${Balance}",
-                request.TransactionId, user.Balance);
+            _logger.LogInformation("✅ [API] Transaction {Id} approved. Deducted ${Amount} from {BankName}.",
+                request.TransactionId, transaction.Amount, activeCard.BankName);
 
             return true;
         }

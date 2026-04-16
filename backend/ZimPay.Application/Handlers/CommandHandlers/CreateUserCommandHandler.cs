@@ -29,7 +29,6 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                 Email = request.Email,
                 Name = request.Name,
                 Phone = request.Phone,
-                Balance = 0,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };

@@ -52,7 +52,6 @@ namespace ZimPay.Application.Handlers.QueryHandlers
                     Email = t.User.Email,
                     Name = t.User.Name,
                     Phone = t.User.Phone,
-                    Balance = t.User.Balance,
                     CreatedAt = t.User.CreatedAt,
                     UpdatedAt = t.User.UpdatedAt,
                     IsActive = t.User.IsActive
@@ -63,7 +62,6 @@ namespace ZimPay.Application.Handlers.QueryHandlers
                     Email = t.Recipient.Email,
                     Name = t.Recipient.Name,
                     Phone = t.Recipient.Phone,
-                    Balance = t.Recipient.Balance,
                     CreatedAt = t.Recipient.CreatedAt,
                     UpdatedAt = t.Recipient.UpdatedAt,
                     IsActive = t.Recipient.IsActive

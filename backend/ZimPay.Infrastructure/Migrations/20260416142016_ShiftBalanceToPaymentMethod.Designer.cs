@@ -11,8 +11,8 @@ using ZimPay.Infrastructure;
 namespace ZimPay.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260414111839_AddDigitalToken")]
-    partial class AddDigitalToken
+    [Migration("20260416142016_ShiftBalanceToPaymentMethod")]
+    partial class ShiftBalanceToPaymentMethod
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -90,73 +90,6 @@ namespace ZimPay.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Passes");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Balance = 42.50m,
-                            Barcode = "TRANSIT-123456",
-                            Color = "#1a73e8",
-                            Details = "Metropolitan Area",
-                            ImageUrl = "",
-                            IsActive = true,
-                            IssuedAt = new DateTime(2024, 10, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IssuerId = "",
-                            IssuerName = "",
-                            PassNumber = "",
-                            Title = "City Transit",
-                            Type = "TransitPass",
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Barcode = "COFFEE-789012",
-                            Color = "#ff9384",
-                            Details = "8 of 10 stars earned",
-                            ImageUrl = "",
-                            IsActive = true,
-                            IssuedAt = new DateTime(2024, 10, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IssuerId = "",
-                            IssuerName = "",
-                            PassNumber = "",
-                            Title = "Coffee Shop Rewards",
-                            Type = "Loyalty",
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Barcode = "LIB-345678",
-                            Color = "#6c9fff",
-                            Details = "Membership Active",
-                            ImageUrl = "",
-                            IsActive = true,
-                            IssuedAt = new DateTime(2024, 10, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IssuerId = "",
-                            IssuerName = "",
-                            PassNumber = "",
-                            Title = "Public Library",
-                            Type = "Loyalty",
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Barcode = "GYM-901234",
-                            Color = "#86f898",
-                            Details = "Next billing: Oct 12",
-                            ImageUrl = "",
-                            IsActive = true,
-                            IssuedAt = new DateTime(2024, 10, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IssuerId = "",
-                            IssuerName = "",
-                            PassNumber = "",
-                            Title = "Everest Gym",
-                            Type = "Loyalty",
-                            UserId = 1
-                        });
                 });
 
             modelBuilder.Entity("ZimPay.Domain.PaymentMethod", b =>
@@ -171,6 +104,9 @@ namespace ZimPay.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("AddedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Balance")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("BankName")
@@ -218,23 +154,6 @@ namespace ZimPay.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("PaymentMethods");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AccountNumber = "",
-                            AddedAt = new DateTime(2024, 10, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            BankName = "Bank of Future",
-                            CardNumber = "8892",
-                            DigitalToken = "seeded_dummy_jwt_token_for_testing",
-                            ExpiryDate = "12/28",
-                            HolderName = "",
-                            IsActive = true,
-                            IsDefault = true,
-                            Type = "CreditCard",
-                            UserId = 1
-                        });
                 });
 
             modelBuilder.Entity("ZimPay.Domain.Transaction", b =>
@@ -294,8 +213,8 @@ namespace ZimPay.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("TEXT");
+                    b.Property<bool>("ContactlessEnabled")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -304,6 +223,9 @@ namespace ZimPay.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("FingerprintEnabled")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
@@ -318,6 +240,9 @@ namespace ZimPay.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal>("TapLimit")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -327,18 +252,6 @@ namespace ZimPay.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Balance = 1500.00m,
-                            CreatedAt = new DateTime(2024, 10, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "john.doe@example.com",
-                            IsActive = true,
-                            Name = "John Doe",
-                            Phone = "+1234567890"
-                        });
                 });
 
             modelBuilder.Entity("ZimPay.Domain.Pass", b =>
