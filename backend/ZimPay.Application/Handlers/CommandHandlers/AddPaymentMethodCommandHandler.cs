@@ -49,7 +49,7 @@ namespace ZimPay.Application.Handlers.CommandHandlers
             var paymentMethod = new ZimPay.Domain.PaymentMethod
             {
                 UserId = request.UserId,
-                Type = request.PaymentMethod.Type ?? "Credit Card",
+                Type = request.PaymentMethod.Type,
                 CardNumber = maskedCardNumber,
                 BankName = request.PaymentMethod.BankName ?? "ZimPay Bank",
                 AccountNumber = request.PaymentMethod.AccountNumber,

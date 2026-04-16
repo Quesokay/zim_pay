@@ -31,17 +31,24 @@ namespace ZimPay.Application.Handlers.CommandHandlers
 
     public async Task<bool> Handle(ProcessTransactionCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("💳 [POS] Received transaction request for ${Amount}", request.Amount);
+        _logger.LogInformation("💳 [POS] Processing transaction: Amount=${Amount}, Token={Token}", request.Amount, request.DigitalToken);
 
         // 1. ✨ IDENTITY VERIFICATION ✨
-        // Look up the User based on the NTAG216 Identity Token tapped at the POS
         var user = await _userRepository.GetByNfcTokenAsync(request.DigitalToken);
         
-        if (user == null || !user.ContactlessEnabled)
+        if (user == null)
         {
-            _logger.LogWarning("❌ [POS] Transaction declined: Invalid, revoked, or disabled NFC tag.");
+            _logger.LogWarning("❌ [POS] Transaction declined: Token {Token} not found in database.", request.DigitalToken);
             throw new InvalidOperationException("Transaction Declined: Unrecognized NFC tag.");
         }
+
+        if (!user.ContactlessEnabled)
+        {
+            _logger.LogWarning("❌ [POS] Transaction declined: User {UserId} has contactless disabled.", user.Id);
+            throw new InvalidOperationException("Transaction Declined: Contactless payments are disabled for this user.");
+        }
+
+        _logger.LogInformation("👤 [POS] Verified User: {UserName} (ID: {UserId})", user.Name, user.Id);
 
         // 2. ✨ DIGITAL CUSTODIAN ROUTING ✨
         // The user was found. Now find their currently selected active card.
