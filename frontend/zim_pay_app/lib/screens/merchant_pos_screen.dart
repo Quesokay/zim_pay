@@ -98,7 +98,8 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'DigitalToken': secureToken,
-          'Amount': double.parse(amount), // Convert string to number
+          'Amount': double.parse(amount),
+          'MerchantName': 'ZimPay POS Terminal',
         }),
       );
 
@@ -181,54 +182,57 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
         backgroundColor: const Color(0xFF0058BA),
         foregroundColor: Colors.white,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Amount Input
-            TextField(
-              controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
-                prefixText: '\$ ',
-                border: InputBorder.none,
-                hintText: '0.00',
-              ),
-            ),
-            const SizedBox(height: 48),
-
-            // Scanner Status
-            Icon(
-              _isScanning ? Icons.contactless : Icons.point_of_sale,
-              size: 80,
-              color: _isScanning ? const Color(0xFF0058BA) : Colors.grey,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              _statusMessage,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[700]),
-            ),
-            const SizedBox(height: 48),
-
-            // Trigger Button
-            if (!_isScanning)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _startNfcRead,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0058BA),
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Ready to Charge', style: TextStyle(fontSize: 18, color: Colors.white)),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 60),
+              // Amount Input
+              TextField(
+                controller: _amountController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.bold),
+                decoration: const InputDecoration(
+                  prefixText: '\$ ',
+                  border: InputBorder.none,
+                  hintText: '0.00',
                 ),
               ),
-          ],
+              const SizedBox(height: 48),
+
+              // Scanner Status
+              Icon(
+                _isScanning ? Icons.contactless : Icons.point_of_sale,
+                size: 80,
+                color: _isScanning ? const Color(0xFF0058BA) : Colors.grey,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                _statusMessage,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 48),
+
+              // Trigger Button
+              if (!_isScanning)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _startNfcRead,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0058BA),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Ready to Charge', style: TextStyle(fontSize: 18, color: Colors.white)),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

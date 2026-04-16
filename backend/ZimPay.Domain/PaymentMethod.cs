@@ -3,6 +3,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ZimPay.Domain
 {
+    public enum CardType
+    {
+        CreditCard,
+        DebitCard,
+        BankAccount
+    }
+
     public class PaymentMethod
     {
         public int Id { get; set; }
@@ -11,8 +18,7 @@ namespace ZimPay.Domain
         public int UserId { get; set; }
         
         [Required]
-        [MaxLength(50)]
-        public string Type { get; set; } // "CreditCard", "DebitCard", "BankAccount"
+        public CardType Type { get; set; }
         
         public string CardNumber { get; set; } // We will now ensure this only holds "•••• 1234"
 
@@ -29,7 +35,7 @@ namespace ZimPay.Domain
         public string HolderName { get; set; } = string.Empty;
         
         public string ExpiryDate { get; set; } = string.Empty; // For cards: MM/YY
-        public decimal Balance { get; set; }
+        public decimal Balance { get; set; } = 1500m;
         public bool IsDefault { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime AddedAt { get; set; }

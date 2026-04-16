@@ -41,10 +41,12 @@ namespace ZimPay.Application.Handlers.QueryHandlers
                 AccountNumber = pm.AccountNumber,
                 HolderName = pm.HolderName,
                 ExpiryDate = pm.ExpiryDate,
+                Balance = pm.Balance,
                 IsDefault = pm.IsDefault,
                 IsActive = pm.IsActive,
                 AddedAt = pm.AddedAt,
-                UpdatedAt = pm.UpdatedAt
+                UpdatedAt = pm.UpdatedAt,
+                DigitalToken = pm.DigitalToken
             }).ToList();
         }
     }

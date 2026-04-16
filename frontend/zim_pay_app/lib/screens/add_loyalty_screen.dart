@@ -7,6 +7,7 @@ import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
 import '../blocs/user/user_bloc.dart';
 import '../models/create_payment_method_dto.dart';
+import '../models/wallet_item.dart';
 
 class AddLoyaltyScreen extends StatefulWidget {
   final String initialTitle;
@@ -160,6 +161,7 @@ class _AddLoyaltyScreenState extends State<AddLoyaltyScreen> {
                               expiryDate: '', // Not used for loyalty
                               cvv: '', // Not used for loyalty
                               cardHolderName: _titleController.text,
+                              cardType: CardType.debitCard, // Default for loyalty/transit in this context
                             ),
                           ),
                         );

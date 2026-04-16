@@ -1,4 +1,5 @@
 using System;
+using ZimPay.Domain;
 
 namespace ZimPay.Application.DTOs
 {
@@ -6,7 +7,7 @@ namespace ZimPay.Application.DTOs
     {
         public int Id { get; set; }
         public int UserId { get; set; }
-        public string Type { get; set; }
+        public CardType Type { get; set; }
         public string CardNumber { get; set; }
         public string BankName { get; set; }
         public string AccountNumber { get; set; }
@@ -22,7 +23,7 @@ namespace ZimPay.Application.DTOs
 
     public class CreatePaymentMethodDto
     {
-        public string Type { get; set; } // "CreditCard", "DebitCard", "BankAccount"
+        public CardType Type { get; set; }
         public string CardNumber { get; set; }
         public string BankName { get; set; }
         public string AccountNumber { get; set; }

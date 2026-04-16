@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 
 enum WalletItemType { creditCard, transitPass, loyaltyCard }
 
+enum CardType {
+  creditCard,
+  debitCard,
+  bankAccount,
+}
+
 abstract class WalletItem {
   final String id;
   final String title;
@@ -18,6 +24,7 @@ class CreditCard extends WalletItem {
   final Color secondaryColor;
   final double balance;
   final bool isDefault;
+  final CardType cardType;
 
   CreditCard({
     required super.id,
@@ -29,6 +36,7 @@ class CreditCard extends WalletItem {
     required this.secondaryColor,
     required this.balance,
     required this.isDefault,
+    required this.cardType,
   }) : super(type: WalletItemType.creditCard);
 
   factory CreditCard.fromJson(Map<String, dynamic> json) {
@@ -40,8 +48,9 @@ class CreditCard extends WalletItem {
       expiryDate: json['expiryDate'] ?? 'MM/YY',
       primaryColor: const Color(0xFF0058BA),
       secondaryColor: const Color(0xFF6C9FFF),
-      balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
+      balance: (json['balance'] as num?)?.toDouble() ?? 1500.0,
       isDefault: json['isDefault'] ?? false,
+      cardType: CardType.values[json['type'] ?? 0],
     );
   }
 }

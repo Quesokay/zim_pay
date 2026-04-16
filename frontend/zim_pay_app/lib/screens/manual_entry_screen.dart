@@ -8,6 +8,7 @@ import '../blocs/wallet/wallet_bloc.dart';
 import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
 import '../models/create_payment_method_dto.dart';
+import '../models/wallet_item.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ManualEntryScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   final _expiryController = TextEditingController();
   final _cvvController = TextEditingController();
   final _holderController = TextEditingController();
+  CardType _selectedCardType = CardType.creditCard;
 
   @override
   void initState() {
@@ -149,6 +151,54 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
+                // Card Type Selection
+                Text(
+                  'Card Type',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: onSurfaceColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: surfaceContainerLowestColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: outlineColor.withOpacity(0.3)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<CardType>(
+                      value: _selectedCardType,
+                      isExpanded: true,
+                      onChanged: (CardType? newValue) {
+                        setState(() {
+                          _selectedCardType = newValue!;
+                        });
+                      },
+                      items: CardType.values.map((CardType type) {
+                        String label = "";
+                        switch (type) {
+                          case CardType.creditCard:
+                            label = "Credit Card";
+                            break;
+                          case CardType.debitCard:
+                            label = "Debit Card";
+                            break;
+                          case CardType.bankAccount:
+                            label = "Bank Account";
+                            break;
+                        }
+                        return DropdownMenuItem<CardType>(
+                          value: type,
+                          child: Text(label),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 _buildTextField(
                   label: 'Card Number',
                   controller: _cardNumberController,
@@ -242,6 +292,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                           expiryDate: _expiryController.text,
                           cvv: _cvvController.text,
                           cardHolderName: _holderController.text,
+                          cardType: _selectedCardType,
                         );
 
                         // 2. Trigger SMS Verification instead of saving directly!
