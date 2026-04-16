@@ -6,5 +6,6 @@ namespace ZimPay.Application.Commands.Transaction
     {
         public string DigitalToken { get; set; }
         public decimal Amount { get; set; }
+        public string MerchantName { get; set; }
     }
 }

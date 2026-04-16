@@ -329,7 +329,14 @@ class CardDetailsExpandedScreen extends StatelessWidget {
           TextButton(
             onPressed: () {
               final userState = context.read<UserBloc>().state;
-              final userId = (userState as UserCreated).user.id;
+              if (userState is! UserCreated) {
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Error: You must be logged in to delete items.')),
+                );
+                return;
+              }
+              final userId = userState.user.id;
 
               if (item is CreditCard) {
                 context.read<WalletBloc>().add(DeleteWalletItem(

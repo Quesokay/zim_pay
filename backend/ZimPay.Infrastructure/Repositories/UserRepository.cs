@@ -74,5 +74,13 @@ namespace ZimPay.Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<User> GetByNfcTokenAsync(string nfcToken)
+        {
+            // Make sure to Include PaymentMethods so we can easily find the active card later!
+            return await _context.Users
+                .Include(u => u.PaymentMethods) 
+                .FirstOrDefaultAsync(u => u.NfcIdentityToken == nfcToken && u.IsActive);
+        }
     }
 }

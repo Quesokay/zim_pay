@@ -66,10 +66,10 @@ class _AddTransitPassScreenState extends State<AddTransitPassScreen> {
       body: BlocListener<WalletBloc, WalletState>(
         listener: (context, state) {
           if (state.status == WalletStatus.success) {
-            Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Transit pass added successfully')),
             );
+            Navigator.popUntil(context, (route) => route.isFirst);
           } else if (state.status == WalletStatus.failure) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Failed to add transit pass')),
@@ -151,14 +151,20 @@ class _AddTransitPassScreenState extends State<AddTransitPassScreen> {
                         );
 
                         final userState = context.read<UserBloc>().state;
-                        final userId = (userState as UserCreated).user.id;
+                        if (userState is UserCreated) {
+                          final userId = userState.user.id;
 
-                        context.read<WalletBloc>().add(
-                          AddPass(
-                            userId: userId,
-                            passDetails: passDto,
-                          ),
-                        );
+                          context.read<WalletBloc>().add(
+                            AddPass(
+                              userId: userId,
+                              passDetails: passDto,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please log in first')),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(

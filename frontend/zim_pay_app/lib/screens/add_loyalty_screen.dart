@@ -144,7 +144,13 @@ class _AddLoyaltyScreenState extends State<AddLoyaltyScreen> {
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         final userState = context.read<UserBloc>().state;
-                        final userId = (userState as UserCreated).user.id;
+                        if (userState is! UserCreated) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Error: You must be logged in to add a loyalty card.')),
+                          );
+                          return;
+                        }
+                        final userId = userState.user.id;
 
                         context.read<WalletBloc>().add(
                           AddManualCard(

@@ -25,7 +25,8 @@ namespace ZimPay.Application.DTOs
             {
                 Success = false,
                 Message = message,
-                Errors = errors ?? new List<string>()
+                Errors = errors ?? new List<string>(),
+                Data = default!
             };
         }
     }

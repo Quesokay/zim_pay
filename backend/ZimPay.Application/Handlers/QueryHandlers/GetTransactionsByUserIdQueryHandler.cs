@@ -42,6 +42,7 @@ namespace ZimPay.Application.Handlers.QueryHandlers
                 Amount = t.Amount,
                 Description = t.Description,
                 Status = t.Status,
+                MerchantName = t.MerchantName,
                 Date = t.Date,
                 CompletedAt = t.CompletedAt,
                 RecipientUserId = t.RecipientUserId,

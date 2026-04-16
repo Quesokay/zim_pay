@@ -25,6 +25,9 @@ namespace ZimPay.Domain
         [MaxLength(50)]
         public string Status { get; set; } = "Pending"; // "Completed", "Pending", "Declined", "Cancelled"
         
+        [MaxLength(100)]
+        public string MerchantName { get; set; }
+
         public DateTime Date { get; set; }
         public DateTime? CompletedAt { get; set; }
         

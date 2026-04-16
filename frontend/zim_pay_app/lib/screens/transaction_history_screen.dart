@@ -25,9 +25,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void initState() {
     super.initState();
     final userState = context.read<UserBloc>().state;
-    final userId = (userState as UserCreated).user.id;
-    context.read<TransactionBloc>().add(LoadTransactions(userId: userId));
-    context.read<TransactionBloc>().add(LoadPendingTransactions(userId: userId));
+    if (userState is UserCreated) {
+      final userId = userState.user.id;
+      context.read<TransactionBloc>().add(LoadTransactions(userId: userId));
+      context.read<TransactionBloc>().add(LoadPendingTransactions(userId: userId));
+    }
   }
 
   @override

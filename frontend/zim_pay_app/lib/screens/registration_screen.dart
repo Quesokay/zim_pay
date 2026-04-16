@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../blocs/user/user_bloc.dart';
-import 'home_screen.dart';
+import 'link_tag_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -39,10 +39,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       body: BlocListener<UserBloc, UserState>(
         listener: (context, state) {
           if (state is UserCreated) {
-            Navigator.pushAndRemoveUntil(
+            // Identity token logic: The backend currently returns the user ID, 
+            // which we will use as the seed for the Identity Token on the tag.
+            Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-              (route) => false,
+              MaterialPageRoute(
+                builder: (context) => LinkTagScreen(
+                  digitalToken: 'ZIMPAY_ID_${state.user.id}', 
+                ),
+              ),
             );
           } else if (state is UserError) {
             ScaffoldMessenger.of(context).showSnackBar(
