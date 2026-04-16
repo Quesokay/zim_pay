@@ -51,6 +51,23 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _currentPage = next;
         });
+        
+        // Auto-set default payment method on swipe
+        _updateDefaultPaymentMethod(next);
+      }
+    }
+  }
+
+  void _updateDefaultPaymentMethod(int index) {
+    final walletState = context.read<WalletBloc>().state;
+    if (walletState.walletItems.isNotEmpty && index < walletState.walletItems.length) {
+      final item = walletState.walletItems[index];
+      final userState = context.read<UserBloc>().state;
+      if (userState is UserCreated) {
+        context.read<WalletBloc>().add(SetDefaultPaymentMethod(
+          userId: userState.user.id,
+          paymentMethodId: item.id,
+        ));
       }
     }
   }
@@ -589,6 +606,7 @@ class _HomeScreenState extends State<HomeScreen> {
           item.bankName,
           item.cardNumber,
           item.expiryDate,
+          item.balance,
         ),
       );
     } else if (item is TransitPass) {
@@ -603,7 +621,7 @@ class _HomeScreenState extends State<HomeScreen> {
           item.primaryColor,
           item.secondaryColor,
           item.title,
-          item.balance,
+          '\$${item.balance.toStringAsFixed(2)}',
         ),
       );
     }
@@ -636,7 +654,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCreditCard(Color color1, Color color2, String bank, String number, String expiry) {
+  Widget _buildCreditCard(Color color1, Color color2, String bank, String number, String expiry, double balance) {
     return Container(
       width: 320,
       decoration: BoxDecoration(
@@ -662,13 +680,26 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                bank,
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    bank,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  Text(
+                    '\$${balance.toStringAsFixed(2)}',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
               const Icon(Icons.contactless, color: Colors.white, size: 32),
             ],

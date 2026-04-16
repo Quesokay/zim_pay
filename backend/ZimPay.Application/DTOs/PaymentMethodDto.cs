@@ -12,6 +12,7 @@ namespace ZimPay.Application.DTOs
         public string AccountNumber { get; set; }
         public string HolderName { get; set; }
         public string ExpiryDate { get; set; }
+        public decimal Balance { get; set; }
         public bool IsDefault { get; set; }
         public bool IsActive { get; set; }
         public DateTime AddedAt { get; set; }
@@ -28,6 +29,7 @@ namespace ZimPay.Application.DTOs
         public string HolderName { get; set; }
         public string ExpiryDate { get; set; }
         public bool IsDefault { get; set; }
+        public decimal Balance { get; set; }
     }
 
     public class UpdatePaymentMethodDto

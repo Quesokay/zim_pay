@@ -13,6 +13,18 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
     on<AddPass>(_onAddPass);
     on<DeleteWalletItem>(_onDeleteWalletItem);
     on<DeletePass>(_onDeletePass);
+    on<SetDefaultPaymentMethod>(_onSetDefaultPaymentMethod);
+  }
+
+  Future<void> _onSetDefaultPaymentMethod(SetDefaultPaymentMethod event, Emitter<WalletState> emit) async {
+    emit(state.copyWith(status: WalletStatus.loading));
+    try {
+      await walletRepository.setDefaultPaymentMethod(event.userId, event.paymentMethodId);
+      add(LoadWalletItems(userId: event.userId));
+    } catch (e) {
+      debugPrint('❌ [BLOC] SetDefaultPaymentMethod FAILED: $e');
+      emit(state.copyWith(status: WalletStatus.failure));
+    }
   }
 
   Future<void> _onLoadWalletItems(LoadWalletItems event, Emitter<WalletState> emit) async {

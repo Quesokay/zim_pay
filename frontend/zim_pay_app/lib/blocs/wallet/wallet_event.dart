@@ -55,3 +55,13 @@ class DeletePass extends WalletEvent {
   @override
   List<Object?> get props => [userId, passId];
 }
+
+class SetDefaultPaymentMethod extends WalletEvent {
+  final int userId;
+  final String paymentMethodId;
+
+  SetDefaultPaymentMethod({required this.userId, required this.paymentMethodId});
+
+  @override
+  List<Object?> get props => [userId, paymentMethodId];
+}

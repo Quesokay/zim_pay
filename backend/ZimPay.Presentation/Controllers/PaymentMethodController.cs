@@ -47,5 +47,19 @@ namespace ZimPay.Presentation.Controllers
 
             return Ok(ApiResponse<bool>.SuccessResponse(true, "Payment method deleted successfully"));
         }
+
+        [HttpPatch("{id}/default")]
+        public async Task<IActionResult> SetDefault(int id, [FromQuery] int userId)
+        {
+            var command = new SetDefaultPaymentMethodCommand(userId, id);
+            var result = await _mediator.Send(command);
+
+            if (!result)
+            {
+                return NotFound(ApiResponse<bool>.ErrorResponse("Payment method not found or does not belong to user"));
+            }
+
+            return Ok(ApiResponse<bool>.SuccessResponse(true, "Payment method set as default"));
+        }
     }
 }

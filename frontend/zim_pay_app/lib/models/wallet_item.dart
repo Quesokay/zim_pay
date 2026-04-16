@@ -16,6 +16,8 @@ class CreditCard extends WalletItem {
   final String expiryDate;
   final Color primaryColor;
   final Color secondaryColor;
+  final double balance;
+  final bool isDefault;
 
   CreditCard({
     required super.id,
@@ -25,6 +27,8 @@ class CreditCard extends WalletItem {
     required this.expiryDate,
     required this.primaryColor,
     required this.secondaryColor,
+    required this.balance,
+    required this.isDefault,
   }) : super(type: WalletItemType.creditCard);
 
   factory CreditCard.fromJson(Map<String, dynamic> json) {
@@ -36,14 +40,17 @@ class CreditCard extends WalletItem {
       expiryDate: json['expiryDate'] ?? 'MM/YY',
       primaryColor: const Color(0xFF0058BA),
       secondaryColor: const Color(0xFF6C9FFF),
+      balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
+      isDefault: json['isDefault'] ?? false,
     );
   }
 }
 
 class TransitPass extends WalletItem {
-  final String balance;
+  final double balance;
   final Color primaryColor;
   final Color secondaryColor;
+  final bool isDefault;
 
   TransitPass({
     required super.id,
@@ -51,15 +58,17 @@ class TransitPass extends WalletItem {
     required this.balance,
     required this.primaryColor,
     required this.secondaryColor,
+    required this.isDefault,
   }) : super(type: WalletItemType.transitPass);
 
   factory TransitPass.fromJson(Map<String, dynamic> json) {
     return TransitPass(
       id: json['id'].toString(),
       title: json['title'] ?? 'Transit Pass',
-      balance: '\$${(json['balance'] ?? 0.0).toStringAsFixed(2)}',
+      balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
       primaryColor: const Color(0xFF006A2B),
       secondaryColor: const Color(0xFF86F898),
+      isDefault: json['isDefault'] ?? false,
     );
   }
 }

@@ -29,10 +29,12 @@ namespace ZimPay.Application.Handlers.QueryHandlers
                 Email = user.Email,
                 Name = user.Name,
                 Phone = user.Phone,
-                Balance = user.Balance,
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
                 IsActive = user.IsActive,
+                FingerprintEnabled = user.FingerprintEnabled,
+                ContactlessEnabled = user.ContactlessEnabled,
+                TapLimit = user.TapLimit,
                 PaymentMethods = user.PaymentMethods != null ? new System.Collections.Generic.List<PaymentMethodDto>(
                     System.Linq.Enumerable.Select(user.PaymentMethods, pm => new PaymentMethodDto
                     {
@@ -44,10 +46,12 @@ namespace ZimPay.Application.Handlers.QueryHandlers
                         AccountNumber = pm.AccountNumber,
                         HolderName = pm.HolderName,
                         ExpiryDate = pm.ExpiryDate,
+                        Balance = pm.Balance,
                         IsDefault = pm.IsDefault,
                         IsActive = pm.IsActive,
                         AddedAt = pm.AddedAt,
-                        UpdatedAt = pm.UpdatedAt
+                        UpdatedAt = pm.UpdatedAt,
+                        DigitalToken = pm.DigitalToken
                     })
                 ) : new System.Collections.Generic.List<PaymentMethodDto>(),
                 Transactions = user.SentTransactions != null ? new System.Collections.Generic.List<TransactionDto>(

@@ -103,6 +103,9 @@ namespace ZimPay.Infrastructure.Migrations
                     b.Property<DateTime>("AddedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("BankName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -206,9 +209,6 @@ namespace ZimPay.Infrastructure.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("TEXT");
 
                     b.Property<bool>("ContactlessEnabled")
                         .HasColumnType("INTEGER");

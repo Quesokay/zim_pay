@@ -39,7 +39,6 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                 Email = user.Email,
                 Name = user.Name,
                 Phone = user.Phone,
-                Balance = user.Balance,
                 IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,

@@ -39,7 +39,6 @@ namespace ZimPay.API.Controllers
                     // Generate a placeholder email until they update their profile
                     Email = $"user_{Guid.NewGuid().ToString().Substring(0, 5)}@zimpay.com", 
                     Phone = request.Phone,
-                    Balance = 150.00m, // Give them a $150 signup bonus for capstone testing!
                     TapLimit = 50.00m, // Default biometric limit
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
