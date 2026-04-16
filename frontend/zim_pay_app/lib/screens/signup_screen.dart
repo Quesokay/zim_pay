@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/user/user_bloc.dart';
+import '../models/user.dart';
 import 'link_tag_screen.dart';
 import '../constants.dart';
 
@@ -40,9 +43,15 @@ class _SignupScreenState extends State<SignupScreen> {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final String nfcToken = responseData['data']['nfcIdentityToken'];
+        final Map<String, dynamic> userJson = responseData['data'];
+        final String nfcToken = userJson['nfcIdentityToken'];
+        final User user = User.fromJson(userJson);
 
         if (mounted) {
+          // 1. Update the Global User State immediately!
+          context.read<UserBloc>().add(SetUserEvent(user));
+
+          // 2. Proceed to Link Tag
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(

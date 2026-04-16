@@ -1,8 +1,12 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
+import '../constants.dart';
 import '../blocs/user/user_bloc.dart';
+import 'link_tag_screen.dart';
 import 'home_screen.dart';
 import 'cards_screen.dart';
 import 'transaction_history_screen.dart';
@@ -24,6 +28,103 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final userState = context.read<UserBloc>().state;
     if (userState is UserCreated) {
       _currentLimit = userState.user.tapLimit;
+    }
+  }
+
+  Future<void> _unlinkTag(int currentUserId) async {
+    // Show confirmation dialog first
+    bool confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Unlink Physical Tag?'),
+        content: const Text('If you lost your tag, this will instantly deactivate it. Your funds and digital cards will remain safe. You will need to link a new tag to use tap-to-pay.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes, Unlink It'),
+          ),
+        ],
+      ),
+    ) ?? false;
+
+    if (!confirm) return;
+
+    // Execute the API Call
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/User/$currentUserId/unlink-tag'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Tag Deactivated. Your funds are secure.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'] ?? 'Failed to unlink tag'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Network error. Check connection.'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _linkNewTag(int currentUserId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/User/$currentUserId/generate-nfc-token'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        final String newDigitalToken = responseData['data'];
+
+        if (mounted) {
+          // We reuse the exact same screen we built for registration!
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LinkTagScreen(
+                digitalToken: newDigitalToken,
+                isRelinking: true,
+              ),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'] ?? 'Failed to generate token'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Network error. Check connection.'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -240,17 +341,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       padding: const EdgeInsets.all(8),
-                      child: _buildSwitchItem(
-                        icon: Icons.mail,
-                        title: 'Email notifications',
-                        subtitle: 'Receipts and security alerts',
-                        value: _emailEnabled,
-                        onChanged: (val) => setState(() => _emailEnabled = val),
-                        primaryColor: primaryColor,
-                        onSurfaceColor: onSurfaceColor,
-                        onSurfaceVariantColor: onSurfaceVariantColor,
-                        iconColor: secondaryColor,
-                        iconBgColor: secondaryContainerColor.withValues(alpha: 0.3),
+                      child: Column(
+                        children: [
+                          _buildSwitchItem(
+                            icon: Icons.mail,
+                            title: 'Email notifications',
+                            subtitle: 'Receipts and security alerts',
+                            value: _emailEnabled,
+                            onChanged: (val) => setState(() => _emailEnabled = val),
+                            primaryColor: primaryColor,
+                            onSurfaceColor: onSurfaceColor,
+                            onSurfaceVariantColor: onSurfaceVariantColor,
+                            iconColor: secondaryColor,
+                            iconBgColor: secondaryContainerColor.withValues(alpha: 0.3),
+                          ),
+                          _buildClickableItem(
+                            icon: Icons.nfc_outlined,
+                            title: 'Unlink Lost Tag',
+                            subtitle: 'Instantly deactivate physical card',
+                            onSurfaceColor: Colors.red,
+                            onSurfaceVariantColor: Colors.redAccent,
+                            surfaceContainerHighColor: Colors.red.withValues(alpha: 0.1),
+                            outlineVariantColor: Colors.red.withValues(alpha: 0.3),
+                            onTap: () {
+                              final userState = context.read<UserBloc>().state;
+                              if (userState is UserCreated) {
+                                _unlinkTag(userState.user.id);
+                              }
+                            },
+                          ),
+                          _buildClickableItem(
+                            icon: Icons.nfc,
+                            title: 'Link New Tag',
+                            subtitle: 'Pair a new or recovered physical card',
+                            onSurfaceColor: onSurfaceColor,
+                            onSurfaceVariantColor: onSurfaceVariantColor,
+                            surfaceContainerHighColor: primaryColor.withValues(alpha: 0.1),
+                            outlineVariantColor: outlineVariantColor,
+                            onTap: () {
+                              final userState = context.read<UserBloc>().state;
+                              if (userState is UserCreated) {
+                                _linkNewTag(userState.user.id);
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 32),

@@ -111,5 +111,29 @@ namespace ZimPay.Presentation.Controllers
                 Data = updatedUser
             });
         }
+
+        [HttpPost("{id}/unlink-tag")]
+        public async Task<IActionResult> UnlinkNfcTag(int id)
+        {
+            var command = new UnlinkNfcTagCommand { UserId = id };
+            var result = await _mediator.Send(command);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("{id}/generate-nfc-token")]
+        public async Task<IActionResult> GenerateNfcToken(int id)
+        {
+            var command = new GenerateNfcTokenCommand { UserId = id };
+            var result = await _mediator.Send(command);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
     }
 }
