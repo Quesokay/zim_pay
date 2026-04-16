@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'signup_screen.dart';
 import '../constants.dart';
 import '../models/user.dart';
 import '../blocs/user/user_bloc.dart';
@@ -229,6 +230,32 @@ class _LoginScreenState extends State<LoginScreen> {
                         _codeSent ? 'Verify & Login' : 'Send Code', 
                         style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)
                       ),
+                ),
+
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'New here? ',
+                      style: GoogleFonts.inter(color: Colors.grey[600]),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SignupScreen()),
+                        );
+                      },
+                      child: Text(
+                        'Sign up',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF0058BA),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -18,21 +18,23 @@ namespace ZimPay.Presentation.Controllers
             _mediator = mediator;
         }
 
-        /*
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserCommand command)
         {
             try
             {
-                var userId = await _mediator.Send(command);
-                return CreatedAtAction(nameof(GetUserById), new { id = userId }, userId);
+                var response = await _mediator.Send(command);
+                return CreatedAtAction(nameof(GetUserById), new { id = response.Data.Id }, response);
             }
             catch (System.InvalidOperationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new ApiResponse<UserDto>
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
             }
         }
-        */
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(int id)

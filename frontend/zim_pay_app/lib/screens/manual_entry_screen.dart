@@ -9,7 +9,6 @@ import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
 import '../models/create_payment_method_dto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:zim_pay_app/screens/link_tag_screen.dart';
 
 class ManualEntryScreen extends StatefulWidget {
   // ADDED: Accept initial data from the Card Scanner
@@ -109,18 +108,13 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         listenWhen: (previous, current) => previous.status == WalletStatus.loading && current.status == WalletStatus.success,
         listener: (context, state) {
           if (state.status == WalletStatus.success) {
-            // 1. Close the manual entry screen
-            Navigator.pop(context);
-
-            // 2. Navigate to the NFC Writer screen with the REAL token from the backend
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => LinkTagScreen(
-                  digitalToken: state.lastGeneratedToken ?? "ERROR_NO_TOKEN", 
-                ),
-              ),
+            // 1. Show success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Card added securely to ZimPay!')),
             );
+
+            // 2. Go back to Home
+            Navigator.popUntil(context, (route) => route.isFirst);
           } else if (state.status == WalletStatus.failure) {
             // Show error snackbar
             ScaffoldMessenger.of(context).showSnackBar(
@@ -421,7 +415,13 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   // 3. The actual save function (extracted from your old button logic)
   void _saveCardToBackend(CreatePaymentMethodDto cardDto) {
     final userState = context.read<UserBloc>().state;
-    final userId = (userState as UserCreated).user.id;
+    if (userState is! UserCreated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: You must be logged in to save a card.')),
+      );
+      return;
+    }
+    final userId = userState.user.id;
 
     context.read<WalletBloc>().add(
         AddManualCard(userId: userId, cardDetails: cardDto)

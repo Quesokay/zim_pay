@@ -10,6 +10,7 @@ namespace ZimPay.Application.DTOs
         public decimal Amount { get; set; }
         public string Description { get; set; }
         public string Status { get; set; }
+        public string MerchantName { get; set; }
         public DateTime Date { get; set; }
         public DateTime? CompletedAt { get; set; }
         public int? RecipientUserId { get; set; }

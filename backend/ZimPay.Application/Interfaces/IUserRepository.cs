@@ -15,5 +15,6 @@ namespace ZimPay.Application.Interfaces
         Task UpdateAsync(User user);
         Task DeleteAsync(int id);
         Task SaveChangesAsync();
+        Task<User> GetByNfcTokenAsync(string nfcToken);
     }
 }

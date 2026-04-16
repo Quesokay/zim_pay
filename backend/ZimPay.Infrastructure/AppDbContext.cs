@@ -49,6 +49,7 @@ namespace ZimPay.Infrastructure
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.MerchantName).HasMaxLength(100);
                 entity.Property(e => e.Amount).HasPrecision(18, 2);
                 
                 entity.HasOne(t => t.User)

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -29,62 +30,66 @@ namespace ZimPay.Application.Handlers.CommandHandlers
         }
 
     public async Task<bool> Handle(ProcessTransactionCommand request, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("💳 [POS] Received transaction request for ${Amount}", request.Amount);
+
+        // 1. ✨ IDENTITY VERIFICATION ✨
+        // Look up the User based on the NTAG216 Identity Token tapped at the POS
+        var user = await _userRepository.GetByNfcTokenAsync(request.DigitalToken);
+        
+        if (user == null || !user.ContactlessEnabled)
         {
-            _logger.LogInformation("💳 [POS] Received transaction request for ${Amount}", request.Amount);
+            _logger.LogWarning("❌ [POS] Transaction declined: Invalid, revoked, or disabled NFC tag.");
+            throw new InvalidOperationException("Transaction Declined: Unrecognized NFC tag.");
+        }
 
-            // 1. Find the token/tag that was tapped
-            var nfcToken = await _paymentMethodRepository.GetByTokenAsync(request.DigitalToken);
-            if (nfcToken == null || !nfcToken.IsActive)
-                throw new InvalidOperationException("Transaction Declined: Invalid NFC tag.");
+        // 2. ✨ DIGITAL CUSTODIAN ROUTING ✨
+        // The user was found. Now find their currently selected active card.
+        var activeCard = user.PaymentMethods.FirstOrDefault(c => c.IsDefault && c.IsActive);
 
-            var user = await _userRepository.GetByIdAsync(nfcToken.UserId);
+        if (activeCard == null)
+            throw new InvalidOperationException("Transaction Declined: No active default payment method selected on your phone.");
 
-            // 2. ✨ THE "DIGITAL CUSTODIAN" ROUTING ✨
-            // Find the user's active/default payment method to charge
-            var allCards = await _paymentMethodRepository.GetByUserIdAsync(user.Id);
-            var activeCard = allCards.FirstOrDefault(c => c.IsDefault && c.IsActive);
+        // 3. Check Balance on the specific card
+        if (activeCard.Balance < request.Amount)
+            throw new InvalidOperationException($"Transaction Declined: Insufficient funds on {activeCard.BankName}.");
 
-            if (activeCard == null)
-                throw new InvalidOperationException("Transaction Declined: No active default payment method selected.");
-
-            // 3. Check Balance on the specific card
-            if (activeCard.Balance < request.Amount)
-                throw new InvalidOperationException($"Transaction Declined: Insufficient funds on {activeCard.BankName}.");
-
-            // 4. Biometric Limit Check
-            if (request.Amount > user.TapLimit)
-            {
-                var pendingTransaction = new Transaction
-                {
-                    UserId = user.Id,
-                    PaymentMethodId = activeCard.Id, // Link to the specific card
-                    Amount = request.Amount,
-                    Type = "Payment",
-                    Status = "Pending",
-                    Date = DateTime.UtcNow,
-                    Description = "ZimPay Tap-to-Pay POS"
-                };
-                await _transactionRepository.AddAsync(pendingTransaction);
-                throw new InvalidOperationException($"BIOMETRIC_REQUIRED:{pendingTransaction.Id}");
-            }
-
-            // 5. Auto-Approve & Deduct
-            activeCard.DeductFunds(request.Amount);
-            await _paymentMethodRepository.UpdateAsync(activeCard); // Update the card's balance
-
-            var transaction = new Transaction
+        // 4. Biometric Limit Check
+        if (request.Amount > user.TapLimit)
+        {
+            var pendingTransaction = new Transaction
             {
                 UserId = user.Id,
-                PaymentMethodId = activeCard.Id,
+                PaymentMethodId = activeCard.Id, 
                 Amount = request.Amount,
                 Type = "Payment",
-                Status = "Completed",
+                Status = "Pending",
                 Date = DateTime.UtcNow,
+                MerchantName = request.MerchantName,
                 Description = "ZimPay Tap-to-Pay POS"
             };
-            await _transactionRepository.AddAsync(transaction);
-            
-            return true;
+            await _transactionRepository.AddAsync(pendingTransaction);
+            throw new InvalidOperationException($"BIOMETRIC_REQUIRED:{pendingTransaction.Id}");
         }
+
+        // 5. Auto-Approve & Deduct
+        activeCard.DeductFunds(request.Amount);
+        await _paymentMethodRepository.UpdateAsync(activeCard); 
+
+        var transaction = new Transaction
+        {
+            UserId = user.Id,
+            PaymentMethodId = activeCard.Id,
+            Amount = request.Amount,
+            Type = "Payment",
+            Status = "Completed",
+            MerchantName = request.MerchantName,
+            Date = DateTime.UtcNow,
+            Description = "ZimPay Tap-to-Pay POS"
+        };
+        await _transactionRepository.AddAsync(transaction);
+        
+        return true;
+    }
     }
 }

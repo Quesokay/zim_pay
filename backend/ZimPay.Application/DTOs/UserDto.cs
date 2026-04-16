@@ -15,6 +15,7 @@ namespace ZimPay.Application.DTOs
         public bool FingerprintEnabled { get; set; }
         public bool ContactlessEnabled { get; set; }
         public decimal TapLimit { get; set; }
+        public string NfcIdentityToken { get; set; }
     }
 
     public class UserDetailDto
