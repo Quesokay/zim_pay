@@ -12,6 +12,12 @@ namespace ZimPay.Infrastructure
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<Pass> Passes { get; set; }
 
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlite("Data Source=wallet.db;Cache=Shared");
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
