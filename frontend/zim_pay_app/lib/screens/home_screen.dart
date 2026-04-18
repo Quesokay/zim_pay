@@ -37,7 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 0.9);
+    // Use a large initial page to allow "infinite" swiping in both directions
+    _pageController = PageController(viewportFraction: 0.9, initialPage: 5000);
     _pageController.addListener(_onPageChange);
 
     // Load initial wallet and transactions
@@ -46,14 +47,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onPageChange() {
     if (_pageController.hasClients && _pageController.page != null) {
-      int next = _pageController.page!.round();
-      if (_currentPage != next) {
-        setState(() {
-          _currentPage = next;
-        });
-        
-        // Auto-set default payment method on swipe
-        _updateDefaultPaymentMethod(next);
+      final walletState = context.read<WalletBloc>().state;
+      if (walletState.walletItems.isNotEmpty) {
+        int realCount = walletState.walletItems.length;
+        int next = _pageController.page!.round();
+        int actualIndex = next % realCount;
+
+        if (_currentPage != actualIndex) {
+          setState(() {
+            _currentPage = actualIndex;
+          });
+
+          // Set default payment method without blocking UI or causing unnecessary rebuilds
+          scheduleMicrotask(() => _updateDefaultPaymentMethod(actualIndex));
+        }
       }
     }
   }
@@ -249,9 +256,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 220,
                             child: PageView.builder(
                               controller: _pageController,
-                              itemCount: state.walletItems.length,
+                              physics: const BouncingScrollPhysics(),
+                              allowImplicitScrolling: true,
                               itemBuilder: (context, index) {
-                                final item = state.walletItems[index];
+                                final actualIndex = index % state.walletItems.length;
+                                final item = state.walletItems[actualIndex];
                                 return AnimatedBuilder(
                                   animation: _pageController,
                                   builder: (context, child) {
@@ -260,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       value = _pageController.page! - index;
                                       value = (1 - (value.abs() * 0.1)).clamp(0.0, 1.0);
                                     } else {
-                                      value = index == 0 ? 1.0 : 0.9;
+                                      value = index == 5000 ? 1.0 : 0.9;
                                     }
                                     return Transform.scale(
                                       scale: value,
@@ -272,7 +281,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                                    child: _buildWalletItemCard(context, item),
+                                    child: RepaintBoundary(
+                                      child: _buildWalletItemCard(context, item),
+                                    ),
                                   ),
                                 );
                               },
@@ -659,7 +670,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCreditCard(Color color1, Color color2, String bank, String number, String expiry, double balance) {
+  Widget _buildCreditCard(
+      Color color1,
+      Color color2,
+      String bank,
+      String number,
+      String expiry,
+      double balance,
+      ) {
     return Container(
       width: 320,
       decoration: BoxDecoration(
