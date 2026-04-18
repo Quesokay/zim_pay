@@ -4,7 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import '../models/wallet_item.dart';
+import '../models/transaction.dart';
 import '../blocs/user/user_bloc.dart';
+import '../blocs/transaction/transaction_bloc.dart';
+import '../blocs/transaction/transaction_state.dart';
 import 'card_details_expanded_screen.dart';
 import 'home_screen.dart';
 import 'transaction_history_screen.dart';
@@ -273,7 +276,7 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                     ),
                     const SizedBox(height: 48),
 
-                    // Recent Activity (Static for now or wire to transaction bloc filtered by card)
+                    // Recent Activity
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -304,46 +307,69 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
                     ),
                     const SizedBox(height: 16),
 
-                    Container(
-                      decoration: BoxDecoration(
-                        color: surfaceContainerLowestColor,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                    BlocBuilder<TransactionBloc, TransactionState>(
+                      builder: (context, txState) {
+                        final cardTransactions = txState.transactions.where((tx) {
+                          if (widget.item is CreditCard) {
+                            return tx.paymentMethodId == (widget.item as CreditCard).id.toString();
+                          }
+                          // Add logic for TransitPass or LoyaltyCard if they have associated transactions
+                          return false;
+                        }).toList();
+
+                        if (cardTransactions.isEmpty) {
+                          return Container(
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              color: surfaceContainerLowestColor,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(Icons.history, color: onSurfaceVariantColor.withValues(alpha: 0.2), size: 48),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No recent activity for this card',
+                                    style: GoogleFonts.inter(color: onSurfaceVariantColor),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: surfaceContainerLowestColor,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Column(
-                        children: [
-                          _buildTransactionItem(
-                            Icons.shopping_bag_outlined,
-                            'Apple Store',
-                            'Oct 24 • 2:14 PM',
-                            '-\$1,299.00',
-                            'Completed',
-                            surfaceContainerHighestColor,
-                            onSurfaceColor,
-                            onSurfaceVariantColor,
-                            secondaryColor,
+                          clipBehavior: Clip.antiAlias,
+                          child: Column(
+                            children: cardTransactions.take(5).map((tx) {
+                              return _buildTransactionItem(
+                                tx.icon,
+                                tx.title,
+                                tx.formattedDate,
+                                tx.formattedAmount,
+                                tx.status.name,
+                                tx.bgColor,
+                                onSurfaceColor,
+                                onSurfaceVariantColor,
+                                tx.status == TransactionStatus.completed ? secondaryColor : Colors.orange,
+                                isAlternate: cardTransactions.indexOf(tx) % 2 != 0,
+                              );
+                            }).toList(),
                           ),
-                          _buildTransactionItem(
-                            Icons.local_cafe_outlined,
-                            'Blue Bottle Coffee',
-                            'Oct 23 • 8:45 AM',
-                            '-\$6.50',
-                            'Completed',
-                            surfaceContainerHighestColor,
-                            onSurfaceColor,
-                            onSurfaceVariantColor,
-                            secondaryColor,
-                            isAlternate: true,
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 40),

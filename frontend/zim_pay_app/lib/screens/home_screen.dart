@@ -77,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (userState is UserCreated) {
       final userId = userState.user.id;
       context.read<WalletBloc>().add(LoadWalletItems(userId: userId));
+      context.read<TransactionBloc>().add(LoadTransactions(userId: userId));
       _loadPendingTransactions();
     }
   }

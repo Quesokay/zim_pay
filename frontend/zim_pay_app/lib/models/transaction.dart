@@ -13,6 +13,7 @@ class Transaction {
   final IconData icon;
   final Color iconColor;
   final Color bgColor;
+  final String? paymentMethodId;
 
   Transaction({
     required this.id,
@@ -24,6 +25,7 @@ class Transaction {
     required this.icon,
     required this.iconColor,
     required this.bgColor,
+    this.paymentMethodId,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
@@ -70,6 +72,7 @@ class Transaction {
       icon: icon,
       iconColor: iconColor,
       bgColor: bgColor,
+      paymentMethodId: json['paymentMethodId']?.toString(),
     );
   }
 
