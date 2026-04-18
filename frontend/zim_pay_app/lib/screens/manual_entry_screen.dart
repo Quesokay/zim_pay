@@ -9,7 +9,7 @@ import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
 import '../models/create_payment_method_dto.dart';
 import '../models/wallet_item.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 
 class ManualEntryScreen extends StatefulWidget {
   // ADDED: Accept initial data from the Card Scanner
@@ -28,11 +28,17 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   final _cvvController = TextEditingController();
   final _holderController = TextEditingController();
   CardType _selectedCardType = CardType.creditCard;
+  bool _isFormValid = false;
 
   @override
   void initState() {
     super.initState();
 
+    _cardNumberController.addListener(_validateForm);
+    _expiryController.addListener(_validateForm);
+    _cvvController.addListener(_validateForm);
+    _holderController.addListener(_validateForm);
+    
     // ADDED: Pre-fill the form if data was passed from the scanner
     if (widget.initialData != null) {
       String rawCard = widget.initialData!['cardNumber'] ?? '';
@@ -53,11 +59,24 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
   @override
   void dispose() {
+    _cardNumberController.removeListener(_validateForm);
+    _expiryController.removeListener(_validateForm);
+    _cvvController.removeListener(_validateForm);
+    _holderController.removeListener(_validateForm);
     _cardNumberController.dispose();
     _expiryController.dispose();
     _cvvController.dispose();
     _holderController.dispose();
     super.dispose();
+  }
+
+  void _validateForm() {
+    setState(() {
+      _isFormValid = _cardNumberController.text.replaceAll(' ', '').length == 16 &&
+          _expiryController.text.length == 5 &&
+          _cvvController.text.length == 3 &&
+          _holderController.text.trim().isNotEmpty;
+    });
   }
 
   void _handleSuccessfulVerification(CreatePaymentMethodDto cardDto) {
@@ -131,6 +150,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
+            onChanged: _validateForm,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -209,8 +229,6 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   outlineColor: outlineColor,
                   surfaceContainerLowestColor: surfaceContainerLowestColor,
                   inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(16),
                     CardNumberFormatter(),
                   ],
                   validator: (value) {
@@ -284,7 +302,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: (_isFormValid) ? () {
                       if (_formKey.currentState!.validate()) {
                         // 1. Create the DTO
                         final cardDto = CreatePaymentMethodDto(
@@ -295,16 +313,18 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                           cardType: _selectedCardType,
                         );
 
-                        // 2. Trigger SMS Verification instead of saving directly!
+                        // 2. Save card directly without SMS verification
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Contacting bank for verification...')),
+                          const SnackBar(content: Text('Saving card...')),
                         );
-                        _startPhoneVerification(cardDto);
+                        _saveCardToBackend(cardDto);
+                        // _startPhoneVerification(cardDto);
                       }
-                    },
+                    } : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.grey[300],
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -342,6 +362,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     );
   }
 
+  /*
   // 1. The Phone Auth Flow
   Future<void> _startPhoneVerification(CreatePaymentMethodDto cardDto) async {
     const testPhoneNumber = '+15555555555';
@@ -381,7 +402,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         },
 
         codeAutoRetrievalTimeout: (String verificationId) {
-          debugPrint('⏱️ [Auth] Auto-retrieval timed out. User must enter code manually.');
+          _verificationId = verificationId;
         },
       );
     } catch (e) {
@@ -462,6 +483,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       ),
     );
   }
+  */
 
   // 3. The actual save function (extracted from your old button logic)
   void _saveCardToBackend(CreatePaymentMethodDto cardDto) {
@@ -549,13 +571,15 @@ class CardNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     if (newValue.selection.baseOffset == 0) return newValue;
-    String enteredData = newValue.text.replaceAll(' ', '');
+    String enteredData = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (enteredData.length > 16) enteredData = enteredData.substring(0, 16);
+    
     StringBuffer buffer = StringBuffer();
 
     for (int i = 0; i < enteredData.length; i++) {
       buffer.write(enteredData[i]);
       int index = i + 1;
-      if (index % 4 == 0 && enteredData.length != index) {
+      if (index % 4 == 0 && enteredData.length != index && index < 16) {
         buffer.write(' ');
       }
     }
