@@ -151,6 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     style: GoogleFonts.inter(fontSize: 18),
                     inputFormatters: [
                       PhoneNumberFormatter(),

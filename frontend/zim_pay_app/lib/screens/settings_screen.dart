@@ -1,11 +1,13 @@
 import 'dart:ui';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import '../constants.dart';
 import '../blocs/user/user_bloc.dart';
+import '../services/biometric_service.dart';
 import 'link_tag_screen.dart';
 import 'home_screen.dart';
 import 'cards_screen.dart';
@@ -301,8 +303,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 title: 'Fingerprint unlock',
                                 subtitle: 'Require biometric to view or use cards',
                                 value: fingerprintEnabled,
-                                onChanged: (val) {
-                                  context.read<UserBloc>().add(UpdateUserEvent(fingerprintEnabled: val));
+                                onChanged: (val) async {
+                                  if (val) {
+                                    // Verify identity before enabling
+                                    bool authenticated = await BiometricService.authenticate(
+                                      context,
+                                      'Confirm fingerprint to enable biometric security',
+                                    );
+                                    if (authenticated) {
+                                      if (mounted) {
+                                        context.read<UserBloc>().add(UpdateUserEvent(fingerprintEnabled: true));
+                                      }
+                                    }
+                                  } else {
+                                    // Always allow disabling (or you could require auth here too)
+                                    context.read<UserBloc>().add(UpdateUserEvent(fingerprintEnabled: false));
+                                  }
                                 },
                                 primaryColor: primaryColor,
                                 onSurfaceColor: onSurfaceColor,
@@ -592,7 +608,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Transactions under this amount won\'t require a fingerprint.',
+            'Transactions under \$${_currentLimit.toInt()} won\'t require a fingerprint.',
             style: GoogleFonts.inter(
               color: onSurfaceVariantColor,
               fontSize: 14,
@@ -740,24 +756,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (userState is! UserCreated) return;
 
     final nameController = TextEditingController(text: userState.user.name);
-    final phoneController = TextEditingController(text: userState.user.phone);
+
+    // Format the phone number for the UI if it's in the +15555555555 format
+    String initialPhone = userState.user.phone;
+    if (initialPhone.startsWith('+1') && initialPhone.length == 12) {
+      initialPhone = '+1 ${initialPhone.substring(2, 5)} ${initialPhone.substring(5, 8)} ${initialPhone.substring(8)}';
+    }
+    final phoneController = TextEditingController(text: initialPhone);
+    final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            TextField(
-              controller: phoneController,
-              decoration: const InputDecoration(labelText: 'Phone'),
-            ),
-          ],
+        title: Text(
+          'Edit Profile',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+        ),
+        content: Form(
+          key: formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter your name';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  prefixIcon: Icon(Icons.phone_outlined),
+                  hintText: '+1 555 555 5555',
+                ),
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your phone number';
+                  }
+                  if (value.length < 15) {
+                    return 'Format: +1 555 555 5555';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  // Basic auto-formatting
+                  String digits = value.replaceAll(RegExp(r'\D'), '');
+                  if (digits.startsWith('1')) {
+                    String formatted = '+1';
+                    if (digits.length > 1) {
+                      formatted += ' ${digits.substring(1, digits.length > 4 ? 4 : digits.length)}';
+                    }
+                    if (digits.length > 4) {
+                      formatted += ' ${digits.substring(4, digits.length > 7 ? 7 : digits.length)}';
+                    }
+                    if (digits.length > 7) {
+                      formatted += ' ${digits.substring(7, digits.length > 11 ? 11 : digits.length)}';
+                    }
+                    phoneController.value = TextEditingValue(
+                      text: formatted,
+                      selection: TextSelection.collapsed(offset: formatted.length),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -766,13 +843,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              context.read<UserBloc>().add(UpdateUserEvent(
-                name: nameController.text,
-                phone: phoneController.text,
-              ));
-              Navigator.pop(context);
+              if (formKey.currentState!.validate()) {
+                // Strip spaces for backend compatibility
+                final cleanPhone = phoneController.text.replaceAll(' ', '');
+                context.read<UserBloc>().add(UpdateUserEvent(
+                  name: nameController.text.trim(),
+                  phone: cleanPhone,
+                ));
+                Navigator.pop(context);
+              }
             },
-            child: const Text('Save'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0058BA),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Save Changes'),
           ),
         ],
       ),

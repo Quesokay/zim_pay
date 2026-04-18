@@ -13,7 +13,7 @@ class User {
     required this.name,
     required this.phone,
     this.tapLimit = 50.0,
-    this.fingerprintEnabled = true,
+    this.fingerprintEnabled = false,
     this.contactlessEnabled = true,
   });
 
@@ -24,7 +24,7 @@ class User {
       name: json['name'],
       phone: json['phone'],
       tapLimit: (json['tapLimit'] as num?)?.toDouble() ?? 50.0,
-      fingerprintEnabled: json['fingerprintEnabled'] ?? true,
+      fingerprintEnabled: json['fingerprintEnabled'] ?? false,
       contactlessEnabled: json['contactlessEnabled'] ?? true,
     );
   }

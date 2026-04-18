@@ -250,8 +250,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                         outlineColor: outlineColor,
                         surfaceContainerLowestColor: surfaceContainerLowestColor,
                         inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(4),
+                          LengthLimitingTextInputFormatter(5),
                           CardExpiryFormatter(),
                         ],
                         validator: (value) {

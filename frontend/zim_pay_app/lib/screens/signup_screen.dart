@@ -49,7 +49,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _validateForm() {
     final nameValid = _nameController.text.trim().isNotEmpty;
-    final emailValid = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(_emailController.text.trim());
+    final emailValid = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(_emailController.text.trim());
     final phoneValid = _phoneController.text.length == 15;
     
     setState(() {
@@ -158,7 +158,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 isEmail: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Email is required';
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Enter a valid email address';
+                  if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Enter a valid email address';
                   return null;
                 },
               ),
@@ -210,6 +210,7 @@ class _SignupScreenState extends State<SignupScreen> {
     return TextFormField(
       controller: controller,
       keyboardType: isEmail ? TextInputType.emailAddress : (isPhone ? TextInputType.phone : TextInputType.text),
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       inputFormatters: isPhone 
         ? [PhoneNumberFormatter(), LengthLimitingTextInputFormatter(15)] 
         : null,
