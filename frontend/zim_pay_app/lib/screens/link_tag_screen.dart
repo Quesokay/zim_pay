@@ -73,6 +73,8 @@ class _LinkTagScreenState extends State<LinkTagScreen> {
             _statusMessage = '✅ Success! Your physical tag is now securely linked to your ZimPay identity.';
           });
 
+          if (!context.mounted) return;
+
           // Show the success notification
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -83,6 +85,7 @@ class _LinkTagScreenState extends State<LinkTagScreen> {
 
           // Route to Home Screen
           Future.delayed(const Duration(seconds: 2), () {
+            if (!mounted) return;
             if (widget.isRelinking) {
               Navigator.pop(context);
             } else {

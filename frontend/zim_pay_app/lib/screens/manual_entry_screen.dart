@@ -79,18 +79,6 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     });
   }
 
-  void _handleSuccessfulVerification(CreatePaymentMethodDto cardDto) {
-    if (mounted) {
-      // Close the OTP Dialog if it's open
-      if (Navigator.canPop(context)) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
-
-      debugPrint('🚀 [UI] Dispatching AddManualCard event to WalletBloc...');
-      _saveCardToBackend(cardDto);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF0058BA);
@@ -186,7 +174,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   decoration: BoxDecoration(
                     color: surfaceContainerLowestColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: outlineColor.withOpacity(0.3)),
+                    border: Border.all(color: outlineColor.withValues(alpha: 0.3)),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<CardType>(
@@ -593,22 +581,28 @@ class CardNumberFormatter extends TextInputFormatter {
 class CardExpiryFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    var newText = newValue.text;
-    if (newValue.selection.baseOffset == 0) return newValue;
+    String newText = newValue.text;
 
-    var buffer = StringBuffer();
-    for (int i = 0; i < newText.length; i++) {
-      buffer.write(newText[i]);
-      var nonZeroIndex = i + 1;
-      if (nonZeroIndex % 2 == 0 && nonZeroIndex != newText.length) {
+    // Handle backspace properly
+    if (newText.length < oldValue.text.length) {
+      return newValue;
+    }
+
+    String digits = newText.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 4) digits = digits.substring(0, 4);
+
+    StringBuffer buffer = StringBuffer();
+    for (int i = 0; i < digits.length; i++) {
+      buffer.write(digits[i]);
+      if (i == 1 && digits.length > 2) {
         buffer.write('/');
       }
     }
 
-    var string = buffer.toString();
-    return newValue.copyWith(
-      text: string,
-      selection: TextSelection.collapsed(offset: string.length),
+    String formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

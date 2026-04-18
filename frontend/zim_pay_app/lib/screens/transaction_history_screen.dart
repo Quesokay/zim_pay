@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../blocs/user/user_bloc.dart';
 import '../blocs/transaction/transaction_bloc.dart';
 import '../blocs/transaction/transaction_event.dart';
@@ -175,8 +176,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         ),
                         const SizedBox(height: 32),
 
-                        // Transaction List Grouped by Month (Simulated grouping)
-                        _buildSectionHeader('NOVEMBER 2023', outlineColor),
+                        // Transaction List Grouped by Month
+                        _buildSectionHeader(DateFormat('MMMM yyyy').format(DateTime.now()).toUpperCase(), outlineColor),
                         const SizedBox(height: 16),
                         Container(
                           decoration: BoxDecoration(
@@ -202,91 +203,105 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         const SizedBox(height: 32),
 
                         // Summary Card
-                        Container(
-                          height: 180,
-                          decoration: BoxDecoration(
-                            color: primaryColor,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Stack(
-                            children: [
-                              // Decorative elements
-                              Positioned(
-                                top: -48,
-                                right: -48,
-                                child: Container(
-                                  width: 192,
-                                  height: 192,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white.withValues(alpha: 0.1),
-                                  ),
-                                  child: BackdropFilter(
-                                    filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                                    child: Container(color: Colors.transparent),
-                                  ),
-                                ),
+                        Builder(
+                          builder: (context) {
+                            final now = DateTime.now();
+                            final thisMonthTransactions = [...state.transactions, ...state.pendingTransactions].where((tx) => 
+                              tx.date.month == now.month && 
+                              tx.date.year == now.year &&
+                              tx.status != TransactionStatus.declined &&
+                              tx.isSpending
+                            );
+                            
+                            final totalSpent = thisMonthTransactions.fold(0.0, (sum, tx) => sum + tx.amount.abs());
+
+                            return Container(
+                              height: 180,
+                              decoration: BoxDecoration(
+                                color: primaryColor,
+                                borderRadius: BorderRadius.circular(24),
                               ),
-                              Positioned(
-                                bottom: -32,
-                                left: -32,
-                                child: Container(
-                                  width: 128,
-                                  height: 128,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: const Color(0xFF004DA4).withValues(alpha: 0.4),
-                                  ),
-                                  child: BackdropFilter(
-                                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                                    child: Container(color: Colors.transparent),
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(32),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      'Total Spent this month',
-                                      style: GoogleFonts.inter(
-                                        color: Colors.white.withValues(alpha: 0.7),
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      r'$1,432.50',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        color: Colors.white,
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              clipBehavior: Clip.antiAlias,
+                              child: Stack(
+                                children: [
+                                  // Decorative elements
+                                  Positioned(
+                                    top: -48,
+                                    right: -48,
+                                    child: Container(
+                                      width: 192,
+                                      height: 192,
                                       decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
                                         color: Colors.white.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(20),
                                       ),
-                                      child: Text(
-                                        '12% less than last month',
-                                        style: GoogleFonts.inter(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                      child: BackdropFilter(
+                                        filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                                        child: Container(color: Colors.transparent),
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  Positioned(
+                                    bottom: -32,
+                                    left: -32,
+                                    child: Container(
+                                      width: 128,
+                                      height: 128,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: const Color(0xFF004DA4).withValues(alpha: 0.4),
+                                      ),
+                                      child: BackdropFilter(
+                                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                                        child: Container(color: Colors.transparent),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(32),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          'Total Spent this month',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white.withValues(alpha: 0.7),
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '\$${totalSpent.toStringAsFixed(2)}',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            color: Colors.white,
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            'Updated just now',
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            );
+                          }
                         ),
                         const SizedBox(height: 120),
                       ]),

@@ -35,6 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _unlinkTag(int currentUserId) async {
     // Show confirmation dialog first
+    if (!context.mounted) return;
     bool confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -55,6 +56,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ) ?? false;
 
     if (!confirm) return;
+
+    if (!context.mounted) return;
 
     // Execute the API Call
     try {
@@ -306,6 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 onChanged: (val) async {
                                   if (val) {
                                     // Verify identity before enabling
+                                    if (!context.mounted) return;
                                     bool authenticated = await BiometricService.authenticate(
                                       context,
                                       'Confirm fingerprint to enable biometric security',
@@ -801,7 +805,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
+                  PhoneNumberFormatter(),
+                  LengthLimitingTextInputFormatter(15),
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -811,26 +816,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     return 'Format: +1 555 555 5555';
                   }
                   return null;
-                },
-                onChanged: (value) {
-                  // Basic auto-formatting
-                  String digits = value.replaceAll(RegExp(r'\D'), '');
-                  if (digits.startsWith('1')) {
-                    String formatted = '+1';
-                    if (digits.length > 1) {
-                      formatted += ' ${digits.substring(1, digits.length > 4 ? 4 : digits.length)}';
-                    }
-                    if (digits.length > 4) {
-                      formatted += ' ${digits.substring(4, digits.length > 7 ? 7 : digits.length)}';
-                    }
-                    if (digits.length > 7) {
-                      formatted += ' ${digits.substring(7, digits.length > 11 ? 11 : digits.length)}';
-                    }
-                    phoneController.value = TextEditingValue(
-                      text: formatted,
-                      selection: TextSelection.collapsed(offset: formatted.length),
-                    );
-                  }
                 },
               ),
             ],
@@ -900,6 +885,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    String text = newValue.text;
+
+    if (text.isEmpty) {
+      return newValue.copyWith(text: '+1 ', selection: const TextSelection.collapsed(offset: 3));
+    }
+
+    if (!text.startsWith('+1')) {
+      text = '+1 $text';
+    }
+
+    if (text.length > 3 && text[2] != ' ') {
+      text = '${text.substring(0, 2)} ${text.substring(2)}';
+    }
+
+    String digits = text.substring(3).replaceAll(RegExp(r'\D'), '');
+    String formatted = '+1 ';
+
+    for (int i = 0; i < digits.length; i++) {
+      formatted += digits[i];
+      if ((i == 2 || i == 5) && i != digits.length - 1) {
+        formatted += ' ';
+      }
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }
