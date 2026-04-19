@@ -59,6 +59,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (!context.mounted) return;
 
+    // ✨ BIOMETRIC CHALLENGE BEFORE UNLINKING ✨
+    bool authenticated = await BiometricService.authenticate(
+      context,
+      'Scan fingerprint to confirm tag deactivation',
+    );
+
+    if (!authenticated) return;
+
+    if (!context.mounted) return;
+
     // Execute the API Call
     try {
       final response = await http.post(
