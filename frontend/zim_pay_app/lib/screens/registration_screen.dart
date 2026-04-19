@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../blocs/user/user_bloc.dart';
 import 'link_tag_screen.dart';
@@ -165,13 +166,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 validator: (value) => value!.isEmpty ? 'Enter your email' : null,
                               ),
                               const SizedBox(height: 16),
-                              _buildTextField(
-                                controller: _phoneController,
-                                label: 'Phone Number',
-                                icon: Icons.phone,
-                                keyboardType: TextInputType.phone,
-                                validator: (value) => value!.isEmpty ? 'Enter your phone' : null,
-                              ),
+                                _buildTextField(
+                                  controller: _phoneController,
+                                  label: 'Phone Number',
+                                  icon: Icons.phone,
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: [
+                                    PhoneNumberFormatter(),
+                                    LengthLimitingTextInputFormatter(15),
+                                  ],
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) return 'Enter your phone';
+                                    if (value.length < 15) return 'Enter a valid phone number';
+                                    return null;
+                                  },
+                                ),
                               const SizedBox(height: 40),
 
                               SizedBox(
@@ -183,7 +192,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                             CreateUserEvent(
                                               _emailController.text,
                                               _nameController.text,
-                                              _phoneController.text,
+                                              _phoneController.text.replaceAll(' ', ''),
                                             ),
                                           );
                                     }
@@ -241,6 +250,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     required String label,
     required IconData icon,
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     const primaryColor = Color(0xFF0058BA);
@@ -249,6 +259,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       validator: validator,
       style: GoogleFonts.inter(
         fontSize: 16,
@@ -288,6 +299,40 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           borderSide: const BorderSide(color: Colors.redAccent, width: 2),
         ),
       ),
+    );
+  }
+}
+
+class PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    String text = newValue.text;
+
+    if (text.isEmpty) {
+      return newValue.copyWith(text: '+1 ', selection: const TextSelection.collapsed(offset: 3));
+    }
+
+    if (!text.startsWith('+1')) {
+      text = '+1 $text';
+    }
+
+    if (text.length > 3 && text[2] != ' ') {
+      text = '${text.substring(0, 2)} ${text.substring(2)}';
+    }
+
+    String digits = text.substring(3).replaceAll(RegExp(r'\D'), '');
+    String formatted = '+1 ';
+
+    for (int i = 0; i < digits.length; i++) {
+      formatted += digits[i];
+      if ((i == 2 || i == 5) && i != digits.length - 1) {
+        formatted += ' ';
+      }
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

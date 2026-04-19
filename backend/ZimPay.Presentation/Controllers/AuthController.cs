@@ -26,31 +26,19 @@ namespace ZimPay.API.Controllers
                 return BadRequest(new { message = "Phone number is required." });
             }
 
-            // 1. Check if the user already exists in the database
+            // 1. Check if the user exists in the database
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Phone == request.Phone);
 
-            // 2. If they don't exist, perform Registration automatically!
+            // 2. If they don't exist, return NotFound
             if (user == null)
             {
-                user = new User
-                {
-                    Name = "New ZimPay User",
-                    // Generate a placeholder email until they update their profile
-                    Email = $"user_{Guid.NewGuid().ToString().Substring(0, 5)}@zimpay.com", 
-                    Phone = request.Phone,
-                    TapLimit = 50.00m, // Default biometric limit
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
+                return NotFound(new { message = "No account found with this phone number." });
             }
 
             // 3. Return the user data to Flutter
             return Ok(new { 
-                message = "Authentication successful", 
+                message = "Login successful",
                 user = user 
             });
         }

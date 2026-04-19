@@ -9,7 +9,7 @@ import '../blocs/wallet/wallet_event.dart';
 import '../blocs/wallet/wallet_state.dart';
 import '../models/create_payment_method_dto.dart';
 import '../models/wallet_item.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 
 class ManualEntryScreen extends StatefulWidget {
   // ADDED: Accept initial data from the Card Scanner
@@ -28,11 +28,17 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   final _cvvController = TextEditingController();
   final _holderController = TextEditingController();
   CardType _selectedCardType = CardType.creditCard;
+  bool _isFormValid = false;
 
   @override
   void initState() {
     super.initState();
 
+    _cardNumberController.addListener(_validateForm);
+    _expiryController.addListener(_validateForm);
+    _cvvController.addListener(_validateForm);
+    _holderController.addListener(_validateForm);
+    
     // ADDED: Pre-fill the form if data was passed from the scanner
     if (widget.initialData != null) {
       String rawCard = widget.initialData!['cardNumber'] ?? '';
@@ -53,6 +59,10 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
   @override
   void dispose() {
+    _cardNumberController.removeListener(_validateForm);
+    _expiryController.removeListener(_validateForm);
+    _cvvController.removeListener(_validateForm);
+    _holderController.removeListener(_validateForm);
     _cardNumberController.dispose();
     _expiryController.dispose();
     _cvvController.dispose();
@@ -60,16 +70,13 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     super.dispose();
   }
 
-  void _handleSuccessfulVerification(CreatePaymentMethodDto cardDto) {
-    if (mounted) {
-      // Close the OTP Dialog if it's open
-      if (Navigator.canPop(context)) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
-
-      debugPrint('🚀 [UI] Dispatching AddManualCard event to WalletBloc...');
-      _saveCardToBackend(cardDto);
-    }
+  void _validateForm() {
+    setState(() {
+      _isFormValid = _cardNumberController.text.replaceAll(' ', '').length == 16 &&
+          _expiryController.text.length == 5 &&
+          _cvvController.text.length == 3 &&
+          _holderController.text.trim().isNotEmpty;
+    });
   }
 
   @override
@@ -131,6 +138,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
+            onChanged: _validateForm,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -166,7 +174,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   decoration: BoxDecoration(
                     color: surfaceContainerLowestColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: outlineColor.withOpacity(0.3)),
+                    border: Border.all(color: outlineColor.withValues(alpha: 0.3)),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<CardType>(
@@ -209,8 +217,6 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   outlineColor: outlineColor,
                   surfaceContainerLowestColor: surfaceContainerLowestColor,
                   inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(16),
                     CardNumberFormatter(),
                   ],
                   validator: (value) {
@@ -232,8 +238,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                         outlineColor: outlineColor,
                         surfaceContainerLowestColor: surfaceContainerLowestColor,
                         inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(4),
+                          LengthLimitingTextInputFormatter(5),
                           CardExpiryFormatter(),
                         ],
                         validator: (value) {
@@ -284,7 +289,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: (_isFormValid) ? () {
                       if (_formKey.currentState!.validate()) {
                         // 1. Create the DTO
                         final cardDto = CreatePaymentMethodDto(
@@ -295,16 +300,18 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                           cardType: _selectedCardType,
                         );
 
-                        // 2. Trigger SMS Verification instead of saving directly!
+                        // 2. Save card directly without SMS verification
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Contacting bank for verification...')),
+                          const SnackBar(content: Text('Saving card...')),
                         );
-                        _startPhoneVerification(cardDto);
+                        _saveCardToBackend(cardDto);
+                        // _startPhoneVerification(cardDto);
                       }
-                    },
+                    } : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.grey[300],
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -342,6 +349,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     );
   }
 
+  /*
   // 1. The Phone Auth Flow
   Future<void> _startPhoneVerification(CreatePaymentMethodDto cardDto) async {
     const testPhoneNumber = '+15555555555';
@@ -381,7 +389,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         },
 
         codeAutoRetrievalTimeout: (String verificationId) {
-          debugPrint('⏱️ [Auth] Auto-retrieval timed out. User must enter code manually.');
+          _verificationId = verificationId;
         },
       );
     } catch (e) {
@@ -462,6 +470,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       ),
     );
   }
+  */
 
   // 3. The actual save function (extracted from your old button logic)
   void _saveCardToBackend(CreatePaymentMethodDto cardDto) {
@@ -549,13 +558,15 @@ class CardNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     if (newValue.selection.baseOffset == 0) return newValue;
-    String enteredData = newValue.text.replaceAll(' ', '');
+    String enteredData = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (enteredData.length > 16) enteredData = enteredData.substring(0, 16);
+    
     StringBuffer buffer = StringBuffer();
 
     for (int i = 0; i < enteredData.length; i++) {
       buffer.write(enteredData[i]);
       int index = i + 1;
-      if (index % 4 == 0 && enteredData.length != index) {
+      if (index % 4 == 0 && enteredData.length != index && index < 16) {
         buffer.write(' ');
       }
     }
@@ -570,22 +581,28 @@ class CardNumberFormatter extends TextInputFormatter {
 class CardExpiryFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    var newText = newValue.text;
-    if (newValue.selection.baseOffset == 0) return newValue;
+    String newText = newValue.text;
 
-    var buffer = StringBuffer();
-    for (int i = 0; i < newText.length; i++) {
-      buffer.write(newText[i]);
-      var nonZeroIndex = i + 1;
-      if (nonZeroIndex % 2 == 0 && nonZeroIndex != newText.length) {
+    // Handle backspace properly
+    if (newText.length < oldValue.text.length) {
+      return newValue;
+    }
+
+    String digits = newText.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 4) digits = digits.substring(0, 4);
+
+    StringBuffer buffer = StringBuffer();
+    for (int i = 0; i < digits.length; i++) {
+      buffer.write(digits[i]);
+      if (i == 1 && digits.length > 2) {
         buffer.write('/');
       }
     }
 
-    var string = buffer.toString();
-    return newValue.copyWith(
-      text: string,
-      selection: TextSelection.collapsed(offset: string.length),
+    String formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

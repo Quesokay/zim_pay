@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../blocs/user/user_bloc.dart';
 import 'home_screen.dart';
@@ -170,12 +171,18 @@ class _SignInScreenState extends State<SignInScreen> {
                             // Form Area
                             TextFormField(
                               controller: _identifierController,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [
+                                PhoneNumberFormatter(),
+                                LengthLimitingTextInputFormatter(15),
+                              ],
                               style: GoogleFonts.inter(
                                 fontSize: 18,
                                 color: const Color(0xFF0F172A),
                               ),
                               decoration: InputDecoration(
-                                labelText: 'Email or phone',
+                                labelText: 'Phone Number',
+                                hintText: '+1 555 555 5555',
                                 labelStyle: GoogleFonts.inter(
                                   fontSize: 16,
                                   color: onSurfaceVariantColor,
@@ -275,10 +282,14 @@ class _SignInScreenState extends State<SignInScreen> {
                                 ),
                                 ElevatedButton(
                                   onPressed: () {
-                                    if (_identifierController.text.isNotEmpty) {
+                                    if (_identifierController.text.length == 15) {
                                       context.read<UserBloc>().add(
-                                            LoginEvent(_identifierController.text),
+                                            LoginEvent(_identifierController.text.replaceAll(' ', '')),
                                           );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Please enter a valid phone number')),
+                                      );
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -380,6 +391,40 @@ class _SignInScreenState extends State<SignInScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    String text = newValue.text;
+
+    if (text.isEmpty) {
+      return newValue.copyWith(text: '+1 ', selection: const TextSelection.collapsed(offset: 3));
+    }
+
+    if (!text.startsWith('+1')) {
+      text = '+1 $text';
+    }
+
+    if (text.length > 3 && text[2] != ' ') {
+      text = '${text.substring(0, 2)} ${text.substring(2)}';
+    }
+
+    String digits = text.substring(3).replaceAll(RegExp(r'\D'), '');
+    String formatted = '+1 ';
+
+    for (int i = 0; i < digits.length; i++) {
+      formatted += digits[i];
+      if ((i == 2 || i == 5) && i != digits.length - 1) {
+        formatted += ' ';
+      }
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

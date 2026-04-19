@@ -13,7 +13,7 @@ namespace ZimPay.Domain
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
-        public bool FingerprintEnabled { get; set; } = true;
+        public bool FingerprintEnabled { get; set; } = false;
         public bool ContactlessEnabled { get; set; } = true;
         public decimal TapLimit { get; set; } = 50.00m;
 

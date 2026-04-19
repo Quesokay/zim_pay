@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'signup_screen.dart';
@@ -19,78 +19,51 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
-  final _otpController = TextEditingController();
   
   bool _isLoading = false;
-  bool _codeSent = false;
-  String _verificationId = '';
+  bool _isFormValid = false;
 
-  // 1. Trigger Firebase Phone Auth
-  Future<void> _verifyPhoneNumber() async {
-    if (_phoneController.text.isEmpty) return;
+  @override
+  void initState() {
+    super.initState();
+    _phoneController.addListener(_validateForm);
+    // Initialize with +1
+    if (_phoneController.text.isEmpty) {
+      _phoneController.text = '+1 ';
+    }
+  }
 
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    _phoneController.removeListener(_validateForm);
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  void _validateForm() {
+    setState(() {
+      // The format "+1 555 555 5555" is exactly 15 characters
+      _isFormValid = _phoneController.text.length == 15;
+    });
+  }
+
+  // Login by only verifying the phone number with the backend
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
     
-    // Using the Test Settings so you don't hit your Capstone SMS quota!
-    await FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true);
-
-    try {
-      await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: _phoneController.text,
-        timeout: const Duration(seconds: 60),
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          // Auto-resolution (usually works on Android)
-          await _signInWithCredential(credential);
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          _showError('Verification Failed: ${e.message}');
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          setState(() {
-            _verificationId = verificationId;
-            _codeSent = true;
-            _isLoading = false;
-          });
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
-      );
-    } catch (e) {
-      _showError('Failed to start verification.');
-    }
-  }
-
-  // 2. Verify the 6-digit OTP
-  Future<void> _verifyOTP() async {
-    if (_otpController.text.length != 6) return;
+    // Strip whitespaces for the database: +1 555 555 5555 -> +15555555555
+    final phone = _phoneController.text.replaceAll(' ', '');
 
     setState(() => _isLoading = true);
 
     try {
-      PhoneAuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId,
-        smsCode: _otpController.text,
-      );
-      await _signInWithCredential(credential);
-    } catch (e) {
-      _showError('Invalid Code. Please try again.');
-    }
-  }
-
-  // 3. Connect to your .NET Backend!
-  Future<void> _signInWithCredential(PhoneAuthCredential credential) async {
-    try {
-      // 1. Sign into Firebase
-      await FirebaseAuth.instance.signInWithCredential(credential);
-      
-      // 2. Call your brand new .NET API
       final url = Uri.parse('${ApiConstants.baseUrl}/Auth/login');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'Phone': _phoneController.text}),
+        body: jsonEncode({'Phone': phone}),
       );
 
       if (response.statusCode == 200) {
@@ -100,37 +73,30 @@ class _LoginScreenState extends State<LoginScreen> {
         
         final user = User.fromJson(userData);
 
-        // 3. Update the Flutter BLoC State with the real user data
+        // Update the Flutter BLoC State with the real user data
         context.read<UserBloc>().add(SetUserEvent(user));
 
-        // 4. Navigate to Home!
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login successful! Welcome back, ${user.name}.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+
+        // Navigate to Home!
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
+      } else if (response.statusCode == 404) {
+        _showError('No account found with this phone number. Please sign up.');
       } else {
-        _showError('Backend Login Failed.');
+        _showError('Login failed. Please try again.');
       }
     } catch (e) {
-      // Catch the pigeon bug if testing locally
-      if (e.toString().contains('PigeonUserDetails') && FirebaseAuth.instance.currentUser != null) {
-        debugPrint('Caught Pigeon bug, proceeding to backend...');
-        // Duplicate the backend call here just for the Pigeon bug workaround
-         final url = Uri.parse('${ApiConstants.baseUrl}/Auth/login');
-         final response = await http.post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'Phone': _phoneController.text}),
-        );
-        if (response.statusCode == 200 && mounted) {
-           final userData = jsonDecode(response.body)['user'];
-           final user = User.fromJson(userData);
-           context.read<UserBloc>().add(SetUserEvent(user));
-           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomeScreen()));
-        }
-      } else {
-        _showError('Failed to sign in.');
-      }
+      _showError('Failed to connect to the server.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -173,47 +139,42 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _codeSent 
-                    ? 'Enter the code sent to ${_phoneController.text}'
-                    : 'Enter your phone number to get started.',
+                  'Enter your phone number to login.',
                   style: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF585C5F)),
                 ),
                 const SizedBox(height: 40),
 
-                // The Input Fields
-                if (!_codeSent) ...[
-                  TextField(
+                // The Input Field
+                Form(
+                  key: _formKey,
+                  onChanged: _validateForm,
+                  child: TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     style: GoogleFonts.inter(fontSize: 18),
+                    inputFormatters: [
+                      PhoneNumberFormatter(),
+                      LengthLimitingTextInputFormatter(15),
+                    ],
                     decoration: InputDecoration(
                       hintText: '+1 555 555 5555',
                       prefixIcon: const Icon(Icons.phone),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty || value == '+1 ') return 'Please enter phone number';
+                      if (value.length < 15) return 'Invalid phone number format';
+                      return null;
+                    },
                   ),
-                ] else ...[
-                  TextField(
-                    controller: _otpController,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    maxLength: 6,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 28, letterSpacing: 4, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      counterText: '',
-                      hintText: '000000',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                  ),
-                ],
+                ),
                 
                 const SizedBox(height: 32),
 
                 // The Action Button
                 ElevatedButton(
-                  onPressed: _isLoading 
-                    ? null 
-                    : (_codeSent ? _verifyOTP : _verifyPhoneNumber),
+                  onPressed: (_isLoading || !_isFormValid) ? null : _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0058BA),
                     foregroundColor: Colors.white,
@@ -227,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
                     : Text(
-                        _codeSent ? 'Verify & Login' : 'Send Code', 
+                        'Login', 
                         style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)
                       ),
                 ),
@@ -265,3 +226,36 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+class PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    String text = newValue.text;
+
+    if (text.isEmpty) {
+      return newValue.copyWith(text: '+1 ', selection: const TextSelection.collapsed(offset: 4));
+    }
+    
+    if (!text.startsWith('+1 ')) {
+      // If user tries to delete the prefix, put it back
+      return oldValue;
+    }
+
+    // Extract only digits after '+1 '
+    String digits = text.substring(3).replaceAll(RegExp(r'\D'), '');
+    String formatted = '+1 ';
+    
+    for (int i = 0; i < digits.length; i++) {
+      formatted += digits[i];
+      if ((i == 2 || i == 5) && i != digits.length - 1) {
+        formatted += ' ';
+      }
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
