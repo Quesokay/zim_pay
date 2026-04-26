@@ -49,7 +49,6 @@ class _CardDetailsScreenState extends State<CardDetailsScreen> with SingleTicker
     const surfaceContainerLowColor = Color(0xFFEEF1F5);
     const surfaceContainerHighColor = Color(0xFFDEE3E8);
     const surfaceContainerHighestColor = Color(0xFFD8DDE2);
-    // ignore: unused_local_variable
     const surfaceContainerLowestColor = Color(0xFFFFFFFF);
     const secondaryColor = Color(0xFF006A2B);
 

@@ -11,3 +11,16 @@ C:\sources\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ZimPay.Domain.dll
 C:\sources\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\refint\ZimPay.Domain.dll
 C:\sources\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ZimPay.Domain.pdb
 C:\sources\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ref\ZimPay.Domain.dll
+C:\Clone_warz\zim_pay\backend\ZimPay.Domain\bin\Debug\net10.0\ZimPay.Domain.deps.json
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\bin\Debug\net10.0\ZimPay.Domain.dll
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\bin\Debug\net10.0\ZimPay.Domain.pdb
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ZimPay.Domain.csproj.AssemblyReference.cache
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ZimPay.Domain.GeneratedMSBuildEditorConfig.editorconfig
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ZimPay.Domain.AssemblyInfoInputs.cache
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ZimPay.Domain.AssemblyInfo.cs
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ZimPay.Domain.csproj.CoreCompileInputs.cache
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ZimPay.Domain.sourcelink.json
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ZimPay.Domain.dll
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\refint\ZimPay.Domain.dll
+c:\Clone_warz\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ZimPay.Domain.pdb
+C:\Clone_warz\zim_pay\backend\ZimPay.Domain\obj\Debug\net10.0\ref\ZimPay.Domain.dll
