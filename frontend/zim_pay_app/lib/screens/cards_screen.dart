@@ -31,6 +31,16 @@ class _CardsScreenState extends State<CardsScreen> {
     }
   }
 
+  void _onSelectCard(WalletItem item) {
+    final userState = context.read<UserBloc>().state;
+    if (userState is UserCreated) {
+      context.read<WalletBloc>().add(SetDefaultPaymentMethod(
+        userId: userState.user.id,
+        paymentMethodId: item.id,
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF0058BA);
@@ -222,6 +232,7 @@ class _CardsScreenState extends State<CardsScreen> {
                                   isSelected: item.isDefault,
                                   primaryColor: primaryColor,
                                   surfaceContainerLowestColor: surfaceContainerLowestColor,
+                                  onSelect: () => _onSelectCard(item),
                                 ),
                               ),
                             );
@@ -246,6 +257,8 @@ class _CardsScreenState extends State<CardsScreen> {
                                   bgColor: item.primaryColor.withValues(alpha: 0.1),
                                   accentColor: item.primaryColor,
                                   label: 'Transit',
+                                  isSelected: item.isDefault,
+                                  onSelect: () => _onSelectCard(item),
                                 ),
                               ),
                             );
@@ -352,6 +365,7 @@ class _CardsScreenState extends State<CardsScreen> {
     required bool isSelected,
     required Color primaryColor,
     required Color surfaceContainerLowestColor,
+    VoidCallback? onSelect,
   }) {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -409,9 +423,12 @@ class _CardsScreenState extends State<CardsScreen> {
                   ),
                 )
               else
-                const Text(
-                  'Select',
-                  style: TextStyle(color: Color(0xFF73777A), fontSize: 10, fontWeight: FontWeight.bold),
+                GestureDetector(
+                  onTap: onSelect,
+                  child: const Text(
+                    'Select',
+                    style: TextStyle(color: Color(0xFF73777A), fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
                 ),
             ],
           ),
@@ -449,9 +466,12 @@ class _CardsScreenState extends State<CardsScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              Icon(
-                isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: isSelected ? primaryColor : const Color(0xFFAAADB1),
+              GestureDetector(
+                onTap: onSelect,
+                child: Icon(
+                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: isSelected ? primaryColor : const Color(0xFFAAADB1),
+                ),
               ),
             ],
           ),
@@ -468,6 +488,8 @@ class _CardsScreenState extends State<CardsScreen> {
     required Color bgColor,
     required Color accentColor,
     required String label,
+    bool isSelected = false,
+    VoidCallback? onSelect,
     IconData? trailingIcon,
   }) {
     return Container(
@@ -475,6 +497,7 @@ class _CardsScreenState extends State<CardsScreen> {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
+        border: isSelected ? Border.all(color: accentColor, width: 2) : null,
       ),
       child: Column( crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -490,10 +513,26 @@ class _CardsScreenState extends State<CardsScreen> {
                 ),
                 child: Icon(icon, color: iconColor, size: 20),
               ),
-              Text(
-                label,
-                style: TextStyle(color: accentColor, fontSize: 10, fontWeight: FontWeight.bold),
-              ),
+              if (isSelected)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Default',
+                    style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                )
+              else
+                GestureDetector(
+                  onTap: onSelect,
+                  child: Text(
+                    'Select',
+                    style: TextStyle(color: accentColor, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 48),
@@ -529,10 +568,13 @@ class _CardsScreenState extends State<CardsScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              Icon(
-                trailingIcon ?? Icons.arrow_forward_ios,
-                color: accentColor.withValues(alpha: 0.8),
-                size: 20,
+              GestureDetector(
+                onTap: onSelect,
+                child: Icon(
+                  isSelected ? Icons.check_circle : (trailingIcon ?? Icons.radio_button_unchecked),
+                  color: accentColor.withValues(alpha: 0.8),
+                  size: 24,
+                ),
               ),
             ],
           ),
