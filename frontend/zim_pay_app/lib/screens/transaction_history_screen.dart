@@ -185,19 +185,44 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             borderRadius: BorderRadius.circular(24),
                           ),
                           padding: const EdgeInsets.all(8),
-                          child: Column(
-                            children: [
-                              ...state.pendingTransactions,
-                              ...state.transactions,
-                            ].map((tx) {
-                              return _buildTransactionItemFromModel(
-                                tx,
-                                onSurfaceColor: onSurfaceColor,
-                                onSurfaceVariantColor: onSurfaceVariantColor,
-                                secondaryColor: secondaryColor,
-                                errorColor: errorColor,
+                          child: Builder(
+                            builder: (context) {
+                              // Deduplicate transactions by ID to prevent double-listing
+                              final Map<String, Transaction> uniqueTransactions = {};
+                              for (var tx in state.pendingTransactions) {
+                                uniqueTransactions[tx.id] = tx;
+                              }
+                              for (var tx in state.transactions) {
+                                uniqueTransactions[tx.id] = tx;
+                              }
+                              
+                              final displayList = uniqueTransactions.values.toList()
+                                ..sort((a, b) => b.date.compareTo(a.date));
+
+                              if (displayList.isEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 40),
+                                  child: Center(
+                                    child: Text(
+                                      'No transactions yet',
+                                      style: GoogleFonts.inter(color: onSurfaceVariantColor),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return Column(
+                                children: displayList.map((tx) {
+                                  return _buildTransactionItemFromModel(
+                                    tx,
+                                    onSurfaceColor: onSurfaceColor,
+                                    onSurfaceVariantColor: onSurfaceVariantColor,
+                                    secondaryColor: secondaryColor,
+                                    errorColor: errorColor,
+                                  );
+                                }).toList(),
                               );
-                            }).toList(),
+                            }
                           ),
                         ),
                         const SizedBox(height: 32),
@@ -206,7 +231,17 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         Builder(
                           builder: (context) {
                             final now = DateTime.now();
-                            final thisMonthTransactions = [...state.transactions, ...state.pendingTransactions].where((tx) => 
+                            
+                            // Deduplicate transactions for accurate summary calculation
+                            final Map<String, Transaction> uniqueTransactions = {};
+                            for (var tx in state.pendingTransactions) {
+                              uniqueTransactions[tx.id] = tx;
+                            }
+                            for (var tx in state.transactions) {
+                              uniqueTransactions[tx.id] = tx;
+                            }
+
+                            final thisMonthTransactions = uniqueTransactions.values.where((tx) =>
                               tx.date.month == now.month && 
                               tx.date.year == now.year &&
                               tx.status != TransactionStatus.declined &&

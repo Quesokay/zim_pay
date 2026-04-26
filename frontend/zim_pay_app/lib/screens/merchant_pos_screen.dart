@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert'; // Required for utf8 decoding
 import 'package:http/http.dart' as http;
 import '../constants.dart';
+import '../blocs/transaction/transaction_bloc.dart';
+import '../blocs/transaction/transaction_event.dart';
+import '../blocs/user/user_bloc.dart';
 
 class MerchantPosScreen extends StatefulWidget {
   const MerchantPosScreen({super.key});
@@ -113,9 +117,11 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
         if (isSuccess) {
           if (responseData is Map && responseData['biometricRequired'] == true) {
             // BIOMETRIC REQUIRED!
+            if (!mounted) return;
             showDialog(
               context: context,
-              builder: (context) => AlertDialog(
+              barrierDismissible: false,
+              builder: (dialogContext) => AlertDialog(
                 title: const Row(
                   children: [
                     Icon(Icons.fingerprint, color: Colors.orange),
@@ -127,11 +133,15 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
                 actions: [
                   TextButton(
                     onPressed: () {
-                      Navigator.pop(context);
-                      setState(() {
-                        _amountController.clear();
-                        _statusMessage = 'Awaiting User Approval...';
-                      });
+                      // 1. Refresh User's Pending Transactions immediately
+                      final userState = context.read<UserBloc>().state;
+                      if (userState is UserCreated) {
+                        context.read<TransactionBloc>().add(LoadPendingTransactions(userId: userState.user.id));
+                      }
+
+                      // 2. Go back to Home Screen so the user sees the floating card
+                      Navigator.pop(dialogContext); // Close Dialog
+                      Navigator.pop(context); // Pop POS Screen back to Home
                     },
                     child: const Text('OK'),
                   )

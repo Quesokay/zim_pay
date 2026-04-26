@@ -117,8 +117,34 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: surfaceColor,
       extendBody: true,
-      body: BlocBuilder<WalletBloc, WalletState>(
-        builder: (context, state) {
+      body: BlocListener<TransactionBloc, TransactionState>(
+        listenWhen: (previous, current) => 
+          current.pendingTransactions.length > previous.pendingTransactions.length,
+        listener: (context, state) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                  const SizedBox(width: 12),
+                  const Expanded(child: Text('A payment requires your approval!')),
+                  TextButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      // The list will already show the card, so just scroll to top or highlight
+                    },
+                    child: const Text('VIEW', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFFFFB020),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        },
+        child: BlocBuilder<WalletBloc, WalletState>(
+          builder: (context, state) {
           if (state.status == WalletStatus.loading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -130,9 +156,15 @@ class _HomeScreenState extends State<HomeScreen> {
           return Stack(
             children: [
               // Main Scrollable Content
-              CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
+              RefreshIndicator(
+                onRefresh: () async {
+                  _initialLoad();
+                  // Give it a tiny bit of time to feel like a real refresh
+                  await Future.delayed(const Duration(milliseconds: 500));
+                },
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                  slivers: [
                   // TopAppBar
                   SliverAppBar(
                     floating: true,
@@ -433,6 +465,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+            ),
 
               // Bottom Navigation Bar
               Positioned(
@@ -490,6 +523,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
+    ),
     );
   }
 
