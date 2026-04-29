@@ -32,7 +32,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _phoneController.addListener(_validateForm);
     
     if (_phoneController.text.isEmpty) {
-      _phoneController.text = '+1 ';
+      _phoneController.text = '+263 ';
     }
   }
 
@@ -50,7 +50,7 @@ class _SignupScreenState extends State<SignupScreen> {
   void _validateForm() {
     final nameValid = _nameController.text.trim().isNotEmpty;
     final emailValid = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(_emailController.text.trim());
-    final phoneValid = _phoneController.text.length == 15;
+    final phoneValid = _phoneController.text.length == 16;
     
     setState(() {
       _isFormValid = nameValid && emailValid && phoneValid;
@@ -169,8 +169,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 icon: Icons.phone, 
                 isPhone: true,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Phone number is required';
-                  if (value.length < 15) return 'Invalid phone number format';
+                  if (value == null || value.isEmpty || value == '+263 ') return 'Phone number is required';
+                  if (value.length < 16) return 'Invalid phone number format';
                   return null;
                 },
               ),
@@ -212,7 +212,7 @@ class _SignupScreenState extends State<SignupScreen> {
       keyboardType: isEmail ? TextInputType.emailAddress : (isPhone ? TextInputType.phone : TextInputType.text),
       autovalidateMode: AutovalidateMode.onUserInteraction,
       inputFormatters: isPhone 
-        ? [PhoneNumberFormatter(), LengthLimitingTextInputFormatter(15)] 
+        ? [PhoneNumberFormatter(), LengthLimitingTextInputFormatter(16)] 
         : null,
       validator: validator,
       decoration: InputDecoration(
@@ -251,15 +251,15 @@ class PhoneNumberFormatter extends TextInputFormatter {
     String text = newValue.text;
 
     if (text.isEmpty) {
-      return newValue.copyWith(text: '+1 ', selection: const TextSelection.collapsed(offset: 4));
+      return newValue.copyWith(text: '+263 ', selection: const TextSelection.collapsed(offset: 5));
     }
     
-    if (!text.startsWith('+1 ')) {
+    if (!text.startsWith('+263 ')) {
       return oldValue;
     }
 
-    String digits = text.substring(3).replaceAll(RegExp(r'\D'), '');
-    String formatted = '+1 ';
+    String digits = text.substring(5).replaceAll(RegExp(r'\D'), '');
+    String formatted = '+263 ';
     
     for (int i = 0; i < digits.length; i++) {
       formatted += digits[i];

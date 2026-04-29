@@ -40,18 +40,39 @@ namespace ZimPay.Application.Handlers.CommandHandlers
             }
 
             string fullNumber = (request.PaymentMethod.CardNumber ?? "").Replace(" ", "");
-            string maskedCardNumber = fullNumber.Length >= 4
-                ? $"•••• {fullNumber.Substring(fullNumber.Length - 4)}"
-                : fullNumber;
+            string maskedCardNumber;
 
-            _logger.LogInformation("💳 [BACKEND] Masked card number generated: {MaskedCard}", maskedCardNumber);
+            if (request.PaymentMethod.Type == CardType.EcoCash)
+            {
+                // Mask Zimbabwean Phone: +263 772 123 456 -> +263 ••• ••• 456
+                maskedCardNumber = fullNumber.Length >= 3
+                    ? $"+263 ••• ••• {fullNumber.Substring(fullNumber.Length - 3)}"
+                    : fullNumber;
+                _logger.LogInformation("📱 [BACKEND] Processing EcoCash. Masked Phone: {MaskedPhone}", maskedCardNumber);
+            }
+            else if (request.PaymentMethod.Type == CardType.BankAccount)
+            {
+                // Mask Bank Account: 12345678 -> •••• 5678
+                maskedCardNumber = fullNumber.Length >= 4
+                    ? $"•••• {fullNumber.Substring(fullNumber.Length - 4)}"
+                    : fullNumber;
+                _logger.LogInformation("🏦 [BACKEND] Processing Bank Account. Masked Account: {MaskedAccount}", maskedCardNumber);
+            }
+            else
+            {
+                // Mask Card: 4111222233334444 -> •••• 4444
+                maskedCardNumber = fullNumber.Length >= 4
+                    ? $"•••• {fullNumber.Substring(fullNumber.Length - 4)}"
+                    : fullNumber;
+                _logger.LogInformation("💳 [BACKEND] Processing Card. Masked Card: {MaskedCard}", maskedCardNumber);
+            }
 
             var paymentMethod = new ZimPay.Domain.PaymentMethod
             {
                 UserId = request.UserId,
                 Type = request.PaymentMethod.Type,
                 CardNumber = maskedCardNumber,
-                BankName = request.PaymentMethod.BankName ?? "ZimPay Bank",
+                BankName = request.PaymentMethod.Type == CardType.EcoCash ? "EcoCash" : (request.PaymentMethod.BankName ?? "ZimPay Bank"),
                 AccountNumber = request.PaymentMethod.AccountNumber,
                 HolderName = request.PaymentMethod.HolderName,
                 ExpiryDate = request.PaymentMethod.ExpiryDate,

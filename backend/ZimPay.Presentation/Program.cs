@@ -33,6 +33,7 @@ builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IPassRepository, PassRepository>();
 builder.Services.AddScoped<ITokenizationService, TokenizationService>();
+builder.Services.AddHttpClient<IEcoCashService, EcoCashService>();
 
 // Add CORS
 builder.Services.AddCors(options =>

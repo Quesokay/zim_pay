@@ -16,11 +16,22 @@ class CreatePaymentMethodDto {
   });
 
   Map<String, dynamic> toJson() {
+    String bankName = "ZimPay Bank";
+    String accountNumber = "N/A";
+
+    if (cardType == CardType.ecocash) {
+      bankName = "EcoCash";
+      accountNumber = cardNumber; // Storing phone in account number for ecocash
+    } else if (cardType == CardType.bankAccount) {
+      bankName = "Universal Bank";
+      accountNumber = cardNumber;
+    }
+
     return {
       "Type": cardType.index, // Send as integer for the enum on backend
       "CardNumber": cardNumber,
-      "BankName": "ZimPay Bank",    // Required by your backend
-      "AccountNumber": "N/A",       // Required by your backend
+      "BankName": bankName,
+      "AccountNumber": accountNumber,
       "HolderName": cardHolderName, 
       "ExpiryDate": expiryDate,
       "CVV": cvv,

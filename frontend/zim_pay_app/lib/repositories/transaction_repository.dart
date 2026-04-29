@@ -8,9 +8,9 @@ class TransactionRepository {
   final String baseUrl = ApiConstants.baseUrl;
 
   Future<List<Transaction>> getTransactions(int userId) async {
-    developer.log('Fetching transactions for user $userId from: $baseUrl/User/$userId/transactions');
+    developer.log('Fetching transactions for user $userId from: $baseUrl/Transaction/user/$userId');
     final response = await http.get(
-      Uri.parse('$baseUrl/User/$userId/transactions'),
+      Uri.parse('$baseUrl/Transaction/user/$userId'),
     );
 
     developer.log('GetTransactions response: ${response.statusCode}');

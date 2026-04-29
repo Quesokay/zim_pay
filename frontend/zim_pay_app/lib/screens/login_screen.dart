@@ -29,9 +29,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _phoneController.addListener(_validateForm);
-    // Initialize with +1
+    // Initialize with +263
     if (_phoneController.text.isEmpty) {
-      _phoneController.text = '+1 ';
+      _phoneController.text = '+263 ';
     }
   }
 
@@ -44,8 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _validateForm() {
     setState(() {
-      // The format "+1 555 555 5555" is exactly 15 characters
-      _isFormValid = _phoneController.text.length == 15;
+      // The format "+263 772 123 456" is exactly 16 characters
+      _isFormValid = _phoneController.text.length == 16;
     });
   }
 
@@ -155,16 +155,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: GoogleFonts.inter(fontSize: 18),
                     inputFormatters: [
                       PhoneNumberFormatter(),
-                      LengthLimitingTextInputFormatter(15),
+                      LengthLimitingTextInputFormatter(16),
                     ],
                     decoration: InputDecoration(
-                      hintText: '+1 555 555 5555',
+                      hintText: '+263 772 123 456',
                       prefixIcon: const Icon(Icons.phone),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty || value == '+1 ') return 'Please enter phone number';
-                      if (value.length < 15) return 'Invalid phone number format';
+                      if (value == null || value.isEmpty || value == '+263 ') return 'Please enter phone number';
+                      if (value.length < 16) return 'Invalid phone number format';
                       return null;
                     },
                   ),
@@ -233,17 +233,17 @@ class PhoneNumberFormatter extends TextInputFormatter {
     String text = newValue.text;
 
     if (text.isEmpty) {
-      return newValue.copyWith(text: '+1 ', selection: const TextSelection.collapsed(offset: 4));
+      return newValue.copyWith(text: '+263 ', selection: const TextSelection.collapsed(offset: 5));
     }
     
-    if (!text.startsWith('+1 ')) {
+    if (!text.startsWith('+263 ')) {
       // If user tries to delete the prefix, put it back
       return oldValue;
     }
 
-    // Extract only digits after '+1 '
-    String digits = text.substring(3).replaceAll(RegExp(r'\D'), '');
-    String formatted = '+1 ';
+    // Extract only digits after '+263 '
+    String digits = text.substring(5).replaceAll(RegExp(r'\D'), '');
+    String formatted = '+263 ';
     
     for (int i = 0; i < digits.length; i++) {
       formatted += digits[i];

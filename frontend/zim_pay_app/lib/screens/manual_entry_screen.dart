@@ -27,6 +27,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   final _expiryController = TextEditingController();
   final _cvvController = TextEditingController();
   final _holderController = TextEditingController();
+  final _phoneController = TextEditingController();
   CardType _selectedCardType = CardType.creditCard;
   bool _isFormValid = false;
 
@@ -38,6 +39,10 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     _expiryController.addListener(_validateForm);
     _cvvController.addListener(_validateForm);
     _holderController.addListener(_validateForm);
+    _phoneController.addListener(_validateForm);
+    
+    // Initialize phone with +263
+    _phoneController.text = '+263 ';
     
     // ADDED: Pre-fill the form if data was passed from the scanner
     if (widget.initialData != null) {
@@ -63,19 +68,29 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     _expiryController.removeListener(_validateForm);
     _cvvController.removeListener(_validateForm);
     _holderController.removeListener(_validateForm);
+    _phoneController.removeListener(_validateForm);
     _cardNumberController.dispose();
     _expiryController.dispose();
     _cvvController.dispose();
     _holderController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
   void _validateForm() {
     setState(() {
-      _isFormValid = _cardNumberController.text.replaceAll(' ', '').length == 16 &&
-          _expiryController.text.length == 5 &&
-          _cvvController.text.length == 3 &&
-          _holderController.text.trim().isNotEmpty;
+      if (_selectedCardType == CardType.ecocash) {
+        _isFormValid = _phoneController.text.length == 16 &&
+            _holderController.text.trim().isNotEmpty;
+      } else if (_selectedCardType == CardType.bankAccount) {
+        _isFormValid = _cardNumberController.text.length >= 8 &&
+            _holderController.text.trim().isNotEmpty;
+      } else {
+        _isFormValid = _cardNumberController.text.replaceAll(' ', '').length == 16 &&
+            _expiryController.text.length == 5 &&
+            _cvvController.text.length == 3 &&
+            _holderController.text.trim().isNotEmpty;
+      }
     });
   }
 
@@ -197,6 +212,9 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                           case CardType.bankAccount:
                             label = "Bank Account";
                             break;
+                          case CardType.ecocash:
+                            label = "EcoCash";
+                            break;
                         }
                         return DropdownMenuItem<CardType>(
                           value: type,
@@ -207,81 +225,113 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                _buildTextField(
-                  label: 'Card Number',
-                  controller: _cardNumberController,
-                  keyboardType: TextInputType.number,
-                  prefixIcon: Icons.credit_card,
-                  placeholder: '0000 0000 0000 0000',
-                  onSurfaceColor: onSurfaceColor,
-                  outlineColor: outlineColor,
-                  surfaceContainerLowestColor: surfaceContainerLowestColor,
-                  inputFormatters: [
-                    CardNumberFormatter(),
-                  ],
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter card number';
-                    if (value.replaceAll(' ', '').length < 16) return 'Enter a valid 16-digit card number';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        label: 'Expiry Date',
-                        controller: _expiryController,
-                        keyboardType: TextInputType.number,
-                        placeholder: 'MM/YY',
-                        onSurfaceColor: onSurfaceColor,
-                        outlineColor: outlineColor,
-                        surfaceContainerLowestColor: surfaceContainerLowestColor,
-                        inputFormatters: [
-                          LengthLimitingTextInputFormatter(5),
-                          CardExpiryFormatter(),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Required';
-                          if (value.length < 5) return 'Invalid';
-                          return null;
-                        },
+                if (_selectedCardType == CardType.ecocash)
+                  _buildTextField(
+                    label: 'EcoCash Phone Number',
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    prefixIcon: Icons.phone_android,
+                    placeholder: '+263 772 123 456',
+                    onSurfaceColor: onSurfaceColor,
+                    outlineColor: outlineColor,
+                    surfaceContainerLowestColor: surfaceContainerLowestColor,
+                    inputFormatters: [
+                      PhoneNumberFormatter(),
+                      LengthLimitingTextInputFormatter(16),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty || value == '+263 ') return 'Please enter phone number';
+                      if (value.length < 16) return 'Invalid phone number format';
+                      return null;
+                    },
+                  )
+                else
+                  _buildTextField(
+                    label: _selectedCardType == CardType.bankAccount ? 'Account Number' : 'Card Number',
+                    controller: _cardNumberController,
+                    keyboardType: TextInputType.number,
+                    prefixIcon: _selectedCardType == CardType.bankAccount ? Icons.account_balance : Icons.credit_card,
+                    placeholder: _selectedCardType == CardType.bankAccount ? '1234567890' : '0000 0000 0000 0000',
+                    onSurfaceColor: onSurfaceColor,
+                    outlineColor: outlineColor,
+                    surfaceContainerLowestColor: surfaceContainerLowestColor,
+                    inputFormatters: [
+                      if (_selectedCardType == CardType.bankAccount)
+                        BankAccountFormatter()
+                      else
+                        CardNumberFormatter(),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return _selectedCardType == CardType.bankAccount ? 'Please enter account number' : 'Please enter card number';
+                      }
+                      if (_selectedCardType == CardType.bankAccount) {
+                        if (value.length < 8) return 'Enter a valid account number';
+                      } else {
+                        if (value.replaceAll(' ', '').length < 16) return 'Enter a valid 16-digit card number';
+                      }
+                      return null;
+                    },
+                  ),
+                if (_selectedCardType != CardType.ecocash && _selectedCardType != CardType.bankAccount) ...[
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          label: 'Expiry Date',
+                          controller: _expiryController,
+                          keyboardType: TextInputType.number,
+                          placeholder: 'MM/YY',
+                          onSurfaceColor: onSurfaceColor,
+                          outlineColor: outlineColor,
+                          surfaceContainerLowestColor: surfaceContainerLowestColor,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(5),
+                            CardExpiryFormatter(),
+                          ],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Required';
+                            if (value.length < 5) return 'Invalid';
+                            return null;
+                          },
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildTextField(
-                        label: 'CVV',
-                        controller: _cvvController,
-                        keyboardType: TextInputType.number,
-                        placeholder: '123',
-                        obscureText: true,
-                        onSurfaceColor: onSurfaceColor,
-                        outlineColor: outlineColor,
-                        surfaceContainerLowestColor: surfaceContainerLowestColor,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(3),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Required';
-                          if (value.length < 3) return 'Invalid';
-                          return null;
-                        },
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildTextField(
+                          label: 'CVV',
+                          controller: _cvvController,
+                          keyboardType: TextInputType.number,
+                          placeholder: '123',
+                          obscureText: true,
+                          onSurfaceColor: onSurfaceColor,
+                          outlineColor: outlineColor,
+                          surfaceContainerLowestColor: surfaceContainerLowestColor,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(3),
+                          ],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Required';
+                            if (value.length < 3) return 'Invalid';
+                            return null;
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 20),
                 _buildTextField(
-                  label: 'Cardholder Name',
+                  label: _selectedCardType == CardType.ecocash ? 'EcoCash Name' : 'Holder Name',
                   controller: _holderController,
                   placeholder: 'John Doe',
                   onSurfaceColor: onSurfaceColor,
                   outlineColor: outlineColor,
                   surfaceContainerLowestColor: surfaceContainerLowestColor,
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter holder name';
+                    if (value == null || value.isEmpty) return 'Please enter name';
                     return null;
                   },
                 ),
@@ -293,9 +343,15 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                       if (_formKey.currentState!.validate()) {
                         // 1. Create the DTO
                         final cardDto = CreatePaymentMethodDto(
-                          cardNumber: _cardNumberController.text.replaceAll(' ', ''),
-                          expiryDate: _expiryController.text,
-                          cvv: _cvvController.text,
+                          cardNumber: _selectedCardType == CardType.ecocash 
+                              ? _phoneController.text 
+                              : _cardNumberController.text.replaceAll(' ', ''),
+                          expiryDate: _selectedCardType == CardType.ecocash || _selectedCardType == CardType.bankAccount 
+                              ? 'N/A' 
+                              : _expiryController.text,
+                          cvv: _selectedCardType == CardType.ecocash || _selectedCardType == CardType.bankAccount 
+                              ? '000' 
+                              : _cvvController.text,
                           cardHolderName: _holderController.text,
                           cardType: _selectedCardType,
                         );
@@ -550,6 +606,48 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
           validator: validator,
         ),
       ],
+    );
+  }
+}
+
+class BankAccountFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    String digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 12) digits = digits.substring(0, 12);
+    return TextEditingValue(
+      text: digits,
+      selection: TextSelection.collapsed(offset: digits.length),
+    );
+  }
+}
+
+class PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    String text = newValue.text;
+
+    if (text.isEmpty) {
+      return newValue.copyWith(text: '+263 ', selection: const TextSelection.collapsed(offset: 5));
+    }
+    
+    if (!text.startsWith('+263 ')) {
+      return oldValue;
+    }
+
+    String digits = text.substring(5).replaceAll(RegExp(r'\D'), '');
+    String formatted = '+263 ';
+    
+    for (int i = 0; i < digits.length; i++) {
+      formatted += digits[i];
+      if ((i == 2 || i == 5) && i != digits.length - 1) {
+        formatted += ' ';
+      }
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

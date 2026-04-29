@@ -27,6 +27,15 @@ namespace ZimPay.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Transaction>> GetAllAsync()
+        {
+            return await _context.Transactions
+                .Include(t => t.User)
+                .Include(t => t.Recipient)
+                .OrderByDescending(t => t.Date)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Transaction>> GetByUserIdPaginatedAsync(int userId, int pageNumber, int pageSize)
         {
             return await _context.Transactions

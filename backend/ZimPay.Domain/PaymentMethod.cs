@@ -7,7 +7,8 @@ namespace ZimPay.Domain
     {
         CreditCard,
         DebitCard,
-        BankAccount
+        BankAccount,
+        EcoCash
     }
 
     public class PaymentMethod

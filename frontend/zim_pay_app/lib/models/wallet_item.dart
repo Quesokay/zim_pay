@@ -6,6 +6,7 @@ enum CardType {
   creditCard,
   debitCard,
   bankAccount,
+  ecocash,
 }
 
 abstract class WalletItem {
