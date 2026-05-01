@@ -21,19 +21,22 @@ namespace ZimPay.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            if (string.IsNullOrEmpty(request.Phone))
+            if (string.IsNullOrEmpty(request.Pin))
             {
-                return BadRequest(new { message = "Phone number is required." });
+                return BadRequest(new { message = "PIN is required." });
             }
 
-            // 1. Check if the user exists in the database
+            // In this specific implementation, we are logging in using the PIN only.
+            // For a production app, we would typically check against the current user's PIN.
+            // Here we'll find the first user that matches the PIN for simulation.
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Phone == request.Phone);
+                .Include(u => u.PaymentMethods)
+                .FirstOrDefaultAsync(u => u.Pin == request.Pin);
 
-            // 2. If they don't exist, return NotFound
+            // 2. If no matching PIN found
             if (user == null)
             {
-                return NotFound(new { message = "No account found with this phone number." });
+                return Unauthorized(new { message = "Invalid PIN." });
             }
 
             // 3. Return the user data to Flutter
@@ -47,6 +50,6 @@ namespace ZimPay.API.Controllers
     // A simple DTO to catch the incoming JSON request
     public class LoginRequest
     {
-        public string Phone { get; set; }
+        public string Pin { get; set; }
     }
 }

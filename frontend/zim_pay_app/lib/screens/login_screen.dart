@@ -10,6 +10,7 @@ import '../constants.dart';
 import '../models/user.dart';
 import '../blocs/user/user_bloc.dart';
 import 'home_screen.dart';
+import '../services/biometric_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,7 +21,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
+  final _pinController = TextEditingController();
   
   bool _isLoading = false;
   bool _isFormValid = false;
@@ -28,33 +29,41 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _phoneController.addListener(_validateForm);
-    // Initialize with +263
-    if (_phoneController.text.isEmpty) {
-      _phoneController.text = '+263 ';
-    }
+    _pinController.addListener(_validateForm);
   }
 
   @override
   void dispose() {
-    _phoneController.removeListener(_validateForm);
-    _phoneController.dispose();
+    _pinController.removeListener(_validateForm);
+    _pinController.dispose();
     super.dispose();
   }
 
   void _validateForm() {
     setState(() {
-      // The format "+263 772 123 456" is exactly 16 characters
-      _isFormValid = _phoneController.text.length == 16;
+      _isFormValid = _pinController.text.length >= 4;
     });
   }
 
-  // Login by only verifying the phone number with the backend
+  Future<void> _loginWithBiometrics() async {
+    final authenticated = await BiometricService.authenticate(
+      context, 
+      'Please authenticate to log in to ZimPay'
+    );
+
+    if (authenticated) {
+      // In a real app, you'd send a secure token to the backend.
+      // For this demo, we'll simulate by logging in with the most recent user's PIN if available,
+      // or simply showing a message. Here we'll just try a generic biometric login if we have a stored PIN.
+      _showError('Biometric login initiated. (Simulated)');
+    }
+  }
+
+  // Login by only verifying the PIN with the backend
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     
-    // Strip whitespaces for the database: +1 555 555 5555 -> +15555555555
-    final phone = _phoneController.text.replaceAll(' ', '');
+    final pin = _pinController.text;
 
     setState(() => _isLoading = true);
 
@@ -63,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'Phone': phone}),
+        body: jsonEncode({'Pin': pin}),
       );
 
       if (response.statusCode == 200) {
@@ -90,8 +99,8 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
-      } else if (response.statusCode == 404) {
-        _showError('No account found with this phone number. Please sign up.');
+      } else if (response.statusCode == 401) {
+        _showError('Invalid PIN. Please try again.');
       } else {
         _showError('Login failed. Please try again.');
       }
@@ -139,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter your phone number to login.',
+                  'Enter your security PIN to login.',
                   style: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF585C5F)),
                 ),
                 const SizedBox(height: 40),
@@ -149,22 +158,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   key: _formKey,
                   onChanged: _validateForm,
                   child: TextFormField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
+                    controller: _pinController,
+                    keyboardType: TextInputType.number,
+                    obscureText: true,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                    style: GoogleFonts.inter(fontSize: 18),
+                    style: GoogleFonts.inter(fontSize: 24, letterSpacing: 8),
+                    textAlign: TextAlign.center,
                     inputFormatters: [
-                      PhoneNumberFormatter(),
-                      LengthLimitingTextInputFormatter(16),
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(6),
                     ],
                     decoration: InputDecoration(
-                      hintText: '+263 772 123 456',
-                      prefixIcon: const Icon(Icons.phone),
+                      hintText: '••••',
+                      hintStyle: GoogleFonts.inter(letterSpacing: 8),
+                      prefixIcon: const Icon(Icons.lock_outline),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty || value == '+263 ') return 'Please enter phone number';
-                      if (value.length < 16) return 'Invalid phone number format';
+                      if (value == null || value.isEmpty) return 'Please enter your PIN';
+                      if (value.length < 4) return 'PIN must be at least 4 digits';
                       return null;
                     },
                   ),
@@ -191,6 +203,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Login', 
                         style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)
                       ),
+                ),
+
+                const SizedBox(height: 16),
+                
+                // Biometric Login Button
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _loginWithBiometrics,
+                  icon: const Icon(Icons.fingerprint),
+                  label: const Text('Login with Biometrics'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    side: const BorderSide(color: Color(0xFF0058BA)),
+                    foregroundColor: const Color(0xFF0058BA),
+                  ),
                 ),
 
                 const SizedBox(height: 24),
@@ -223,38 +250,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class PhoneNumberFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    String text = newValue.text;
-
-    if (text.isEmpty) {
-      return newValue.copyWith(text: '+263 ', selection: const TextSelection.collapsed(offset: 5));
-    }
-    
-    if (!text.startsWith('+263 ')) {
-      // If user tries to delete the prefix, put it back
-      return oldValue;
-    }
-
-    // Extract only digits after '+263 '
-    String digits = text.substring(5).replaceAll(RegExp(r'\D'), '');
-    String formatted = '+263 ';
-    
-    for (int i = 0; i < digits.length; i++) {
-      formatted += digits[i];
-      if ((i == 2 || i == 5) && i != digits.length - 1) {
-        formatted += ' ';
-      }
-    }
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

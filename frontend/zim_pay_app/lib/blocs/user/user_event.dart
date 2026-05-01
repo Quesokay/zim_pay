@@ -6,23 +6,23 @@ abstract class UserEvent extends Equatable {
 }
 
 class LoginEvent extends UserEvent {
-  final String email;
+  final String pin;
 
-  LoginEvent(this.email);
+  LoginEvent(this.pin);
 
   @override
-  List<Object> get props => [email];
+  List<Object> get props => [pin];
 }
 
 class CreateUserEvent extends UserEvent {
   final String email;
   final String name;
-  final String phone;
+  final String pin;
 
-  CreateUserEvent(this.email, this.name, this.phone);
+  CreateUserEvent(this.email, this.name, this.pin);
 
   @override
-  List<Object> get props => [email, name, phone];
+  List<Object> get props => [email, name, pin];
 }
 
 class SetUserEvent extends UserEvent {

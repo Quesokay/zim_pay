@@ -24,35 +24,36 @@ class UserRepository {
     }
   }
 
-  Future<User> login(String email) async {
-    developer.log('Logging in user: $email at: $baseUrl/User/login');
+  Future<User> login(String pin) async {
+    developer.log('Logging in user with PIN at: $baseUrl/Auth/login');
     final response = await http.post(
-      Uri.parse('$baseUrl/User/login'),
+      Uri.parse('$baseUrl/Auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email}),
+      body: jsonEncode({'pin': pin}),
     );
 
     developer.log('Login response: ${response.statusCode}');
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
-      return User.fromJson(data['data']);
+      return User.fromJson(data['user']); // Note: AuthController returns { user: ... }
     } else {
       developer.log('Failed to login: ${response.body}');
-      throw Exception('Failed to login');
+      throw Exception('Failed to login: Invalid PIN');
     }
   }
 
-  Future<User> createUser(String email, String name, String phone) async {
+  Future<User> createUser(String email, String name, String pin) async {
     developer.log('Creating user: $email at: $baseUrl/User');
     final response = await http.post(
       Uri.parse('$baseUrl/User'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'name': name, 'phone': phone}),
+      body: jsonEncode({'email': email, 'name': name, 'pin': pin}),
     );
 
     developer.log('CreateUser response: ${response.statusCode}');
-    if (response.statusCode == 201) {
-      return User.fromJson(jsonDecode(response.body));
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final Map<String, dynamic> body = jsonDecode(response.body);
+      return User.fromJson(body['data']); // CreateUserCommandHandler returns ApiResponse<UserDto>
     } else {
       developer.log('Failed to create user: ${response.body}');
       throw Exception('Failed to create user');

@@ -20,7 +20,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
+  final _pinController = TextEditingController();
   bool _isLoading = false;
   bool _isFormValid = false;
 
@@ -29,31 +29,27 @@ class _SignupScreenState extends State<SignupScreen> {
     super.initState();
     _nameController.addListener(_validateForm);
     _emailController.addListener(_validateForm);
-    _phoneController.addListener(_validateForm);
-    
-    if (_phoneController.text.isEmpty) {
-      _phoneController.text = '+263 ';
-    }
+    _pinController.addListener(_validateForm);
   }
 
   @override
   void dispose() {
     _nameController.removeListener(_validateForm);
     _emailController.removeListener(_validateForm);
-    _phoneController.removeListener(_validateForm);
+    _pinController.removeListener(_validateForm);
     _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
+    _pinController.dispose();
     super.dispose();
   }
 
   void _validateForm() {
     final nameValid = _nameController.text.trim().isNotEmpty;
     final emailValid = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(_emailController.text.trim());
-    final phoneValid = _phoneController.text.length == 16;
+    final pinValid = _pinController.text.length >= 4;
     
     setState(() {
-      _isFormValid = nameValid && emailValid && phoneValid;
+      _isFormValid = nameValid && emailValid && pinValid;
     });
   }
 
@@ -63,16 +59,13 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Strip whitespaces for the database: +1 555 555 5555 -> +15555555555
-      final phone = _phoneController.text.replaceAll(' ', '');
-
       final response = await http.post(
         Uri.parse('${ApiConstants.baseUrl}/User'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'name': _nameController.text,
           'email': _emailController.text,
-          'phone': phone,
+          'pin': _pinController.text,
         }),
       );
 
@@ -164,13 +157,13 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                controller: _phoneController, 
-                label: 'Phone Number', 
-                icon: Icons.phone, 
-                isPhone: true,
+                controller: _pinController, 
+                label: 'Security PIN', 
+                icon: Icons.lock_outline, 
+                isPin: true,
                 validator: (value) {
-                  if (value == null || value.isEmpty || value == '+263 ') return 'Phone number is required';
-                  if (value.length < 16) return 'Invalid phone number format';
+                  if (value == null || value.isEmpty) return 'PIN is required';
+                  if (value.length < 4) return 'PIN must be at least 4 digits';
                   return null;
                 },
               ),
@@ -204,15 +197,16 @@ class _SignupScreenState extends State<SignupScreen> {
     required String label, 
     required IconData icon, 
     bool isEmail = false, 
-    bool isPhone = false,
+    bool isPin = false,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
-      keyboardType: isEmail ? TextInputType.emailAddress : (isPhone ? TextInputType.phone : TextInputType.text),
+      keyboardType: isEmail ? TextInputType.emailAddress : (isPin ? TextInputType.number : TextInputType.text),
+      obscureText: isPin,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      inputFormatters: isPhone 
-        ? [PhoneNumberFormatter(), LengthLimitingTextInputFormatter(16)] 
+      inputFormatters: isPin 
+        ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)] 
         : null,
       validator: validator,
       decoration: InputDecoration(
@@ -241,36 +235,6 @@ class _SignupScreenState extends State<SignupScreen> {
           borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
       ),
-    );
-  }
-}
-
-class PhoneNumberFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    String text = newValue.text;
-
-    if (text.isEmpty) {
-      return newValue.copyWith(text: '+263 ', selection: const TextSelection.collapsed(offset: 5));
-    }
-    
-    if (!text.startsWith('+263 ')) {
-      return oldValue;
-    }
-
-    String digits = text.substring(5).replaceAll(RegExp(r'\D'), '');
-    String formatted = '+263 ';
-    
-    for (int i = 0; i < digits.length; i++) {
-      formatted += digits[i];
-      if ((i == 2 || i == 5) && i != digits.length - 1) {
-        formatted += ' ';
-      }
-    }
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

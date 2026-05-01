@@ -29,6 +29,7 @@ namespace ZimPay.Infrastructure
                 entity.Property(e => e.Email).IsRequired().HasMaxLength(256);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(256);
                 entity.Property(e => e.Phone).HasMaxLength(30);
+                entity.Property(e => e.Pin).HasMaxLength(10); // PIN configuration
                 entity.HasIndex(e => e.Email).IsUnique();
             });
 
