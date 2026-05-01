@@ -241,8 +241,12 @@ namespace ZimPay.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
                         .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Pin")
+                        .IsRequired()
+                        .HasMaxLength(10)
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("TapLimit")
