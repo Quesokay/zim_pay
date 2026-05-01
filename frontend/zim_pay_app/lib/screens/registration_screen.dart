@@ -17,13 +17,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _pinController = TextEditingController();
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
+    _pinController.dispose();
     super.dispose();
   }
 
@@ -166,21 +166,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 validator: (value) => value!.isEmpty ? 'Enter your email' : null,
                               ),
                               const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: _phoneController,
-                                  label: 'Phone Number',
-                                  icon: Icons.phone,
-                                  keyboardType: TextInputType.phone,
-                                  inputFormatters: [
-                                    PhoneNumberFormatter(),
-                                    LengthLimitingTextInputFormatter(15),
-                                  ],
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) return 'Enter your phone';
-                                    if (value.length < 15) return 'Enter a valid phone number';
-                                    return null;
-                                  },
-                                ),
+                              _buildTextField(
+                                controller: _pinController,
+                                label: 'Security PIN',
+                                icon: Icons.lock_outline,
+                                keyboardType: TextInputType.number,
+                                obscureText: true,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(6),
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) return 'Enter a PIN';
+                                  if (value.length < 4) return 'PIN must be at least 4 digits';
+                                  return null;
+                                },
+                              ),
                               const SizedBox(height: 40),
 
                               SizedBox(
@@ -192,7 +193,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                             CreateUserEvent(
                                               _emailController.text,
                                               _nameController.text,
-                                              _phoneController.text.replaceAll(' ', ''),
+                                              _pinController.text,
                                             ),
                                           );
                                     }
@@ -252,6 +253,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    bool obscureText = false,
   }) {
     const primaryColor = Color(0xFF0058BA);
     const onSurfaceVariantColor = Color(0xFF475569);
@@ -261,6 +263,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       validator: validator,
+      obscureText: obscureText,
       style: GoogleFonts.inter(
         fontSize: 16,
         color: const Color(0xFF0F172A),

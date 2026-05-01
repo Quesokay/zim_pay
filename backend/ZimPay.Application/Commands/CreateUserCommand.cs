@@ -7,6 +7,7 @@ namespace ZimPay.Application.Commands
     {
         public string Email { get; set; }
         public string Name { get; set; }
-        public string Phone { get; set; }
+        public string? Phone { get; set; } = "263784994297"; // Make Phone nullable/optional
+        public string Pin { get; set; } // Added PIN to command
     }
 }

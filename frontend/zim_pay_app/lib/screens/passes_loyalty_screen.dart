@@ -94,9 +94,11 @@ class _PassesLoyaltyScreenState extends State<PassesLoyaltyScreen> {
                     actions: [
                       BlocBuilder<UserBloc, UserState>(
                         builder: (context, state) {
+                          String name = '?';
                           String? avatarUrl;
                           if (state is UserCreated) {
-                            avatarUrl = 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(state.user.name)}&background=random';
+                            name = state.user.name;
+                            avatarUrl = 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random';
                           }
                           return Padding(
                             padding: const EdgeInsets.only(right: 16.0),
@@ -105,15 +107,24 @@ class _PassesLoyaltyScreenState extends State<PassesLoyaltyScreen> {
                               height: 40,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                image: avatarUrl != null
-                                    ? DecorationImage(
-                                        image: NetworkImage(avatarUrl),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : const DecorationImage(
-                                        image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuBaPePwODv1RibxUwly-1lZCI2955uEu8Nz_gSWK-i-AK3cJknG8DDJJ6iASMu2_IYcGt4wbsw1NUpFPUNmiPib_WkPOOtJooEMUKnRw3QEh3HOHJEl7PNYyX1t19kpmtc5R-u-JJQoZIbytSSUwrllAUBpBKlfcFN3LlaKeS6UOePXAQwbl_h3-eqCsEQRF2gQGGfhbwNr9UsWwsTLAlr-yaLOW_C92on-4Yzoa_DD1YT6Ft_VZ9gkeipe2-JSdBNvAXEti5hhPEEH'),
-                                        fit: BoxFit.cover,
+                                color: primaryColor.withValues(alpha: 0.1),
+                              ),
+                              child: ClipOval(
+                                child: Image.network(
+                                  avatarUrl ?? 'https://ui-avatars.com/api/?name=?&background=random',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Center(
+                                      child: Text(
+                                        name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          color: primaryColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                           );

@@ -54,5 +54,14 @@ namespace ZimPay.Infrastructure.Services
             // We will implement this in Phase 2 for verifying transactions
             throw new NotImplementedException();
         }
+
+        public string GetSecureDataFromToken(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var secureDataClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "SecureData");
+            return secureDataClaim?.Value ?? string.Empty;
+        }
     }
 }

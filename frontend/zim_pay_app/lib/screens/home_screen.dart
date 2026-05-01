@@ -246,9 +246,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(color: surfaceContainerHighestColor, width: 2),
-                                  image: DecorationImage(
-                                    image: NetworkImage('https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random'),
+                                  color: primaryColor.withValues(alpha: 0.1),
+                                ),
+                                child: ClipOval(
+                                  child: Image.network(
+                                    'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random',
                                     fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Text(
+                                          name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            color: primaryColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
                               ),

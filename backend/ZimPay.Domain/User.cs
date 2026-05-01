@@ -9,6 +9,7 @@ namespace ZimPay.Domain
         public string Email { get; set; }
         public string Name { get; set; }
         public string Phone { get; set; }
+        public string Pin { get; set; } // Added PIN field
         public string NfcIdentityToken { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
