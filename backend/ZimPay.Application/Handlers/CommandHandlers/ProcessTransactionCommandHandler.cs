@@ -17,19 +17,22 @@ namespace ZimPay.Application.Handlers.CommandHandlers
         private readonly ILogger<ProcessTransactionCommandHandler> _logger;
         private readonly IUserRepository _userRepository;
         private readonly IEcoCashService _ecoCashService;
+        private readonly ITokenizationService _tokenservice;
 
         public ProcessTransactionCommandHandler(
             IPaymentMethodRepository paymentMethodRepository,
             ITransactionRepository transactionRepository,
             ILogger<ProcessTransactionCommandHandler> logger,
             IUserRepository userRepository,
-            IEcoCashService ecoCashService)
+            IEcoCashService ecoCashService,
+            ITokenizationService tokenizationService)
         {
             _paymentMethodRepository = paymentMethodRepository;
             _transactionRepository = transactionRepository;
             _logger = logger;
             _userRepository = userRepository;
             _ecoCashService = ecoCashService;
+            _tokenservice = tokenizationService;
         }
 
         public async Task<bool> Handle(ProcessTransactionCommand request, CancellationToken cancellationToken)
@@ -62,14 +65,23 @@ namespace ZimPay.Application.Handlers.CommandHandlers
 
             // 3. ✨ ECOCASH INTEGRATION ROUTE ✨
             // Check if the routed card is an EcoCash mobile wallet
-            if (activeCard.Type.ToString() == "MobileMoney" || (activeCard.BankName != null && activeCard.BankName.Contains("EcoCash", StringComparison.OrdinalIgnoreCase)))
+            if (activeCard.Type == CardType.EcoCash || (activeCard.BankName != null && activeCard.BankName.Contains("EcoCash", StringComparison.OrdinalIgnoreCase)))
             {
                 _logger.LogInformation("📱 [POS] Routing via EcoCash Sandbox for User {UserId}", user.Id);
                 
                 string referenceCode = $"ZIM-{Guid.NewGuid().ToString().Substring(0, 5)}";
-                
+
+                // Retrieve RAW phone number from DigitalToken (JWT)
+                string rawPhone = _tokenservice.GetSecureDataFromToken(activeCard.DigitalToken);
+
+                if (string.IsNullOrEmpty(rawPhone))
+                {
+                    _logger.LogWarning("⚠️ [POS] Could not extract raw phone from token for card {CardId}. Falling back to user phone.", activeCard.Id);
+                    rawPhone = user.Phone;
+                }
+
                 bool pushSent = await _ecoCashService.InitiateMerchantPaymentAsync(
-                    customerPhone: user.Phone, 
+                    customerPhone: rawPhone,
                     amount: request.Amount, 
                     merchantCode: request.MerchantName ?? "12345", 
                     referenceCode: referenceCode
@@ -84,7 +96,7 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                         PaymentMethodId = activeCard.Id,
                         Amount = request.Amount,
                         Type = "Payment",
-                        Status = "Pending", 
+                        Status = "Pending",
                         Date = DateTime.UtcNow,
                         MerchantName = request.MerchantName,
                         Description = $"EcoCash POS - Ref: {referenceCode}"
@@ -92,7 +104,7 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                     await _transactionRepository.AddAsync(pendingEcoCashTransaction);
                     
                     _logger.LogInformation("✅ [POS] EcoCash USSD prompt sent successfully.");
-                    return true; 
+                    return true;
                 }
                 else
                 {

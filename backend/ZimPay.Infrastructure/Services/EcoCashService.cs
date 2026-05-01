@@ -14,8 +14,8 @@ namespace ZimPay.Infrastructure.Services
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
         
-        private readonly string _consumerKey;
-        private readonly string _consumerSecret;
+        private readonly string _apiKey;
+        private readonly string _merchantCode;
         private readonly string _baseUrl;
 
         public EcoCashService(HttpClient httpClient, IConfiguration config)
@@ -23,62 +23,69 @@ namespace ZimPay.Infrastructure.Services
             _httpClient = httpClient;
             _config = config;
             
-            _consumerKey = _config["EcoCash:ConsumerKey"];
-            _consumerSecret = _config["EcoCash:ConsumerSecret"];
+            _apiKey = _config["EcoCash:ApiKey"];
+            _merchantCode = _config["EcoCash:MerchantCode"];
             _baseUrl = _config["EcoCash:BaseUrl"]; 
         }
 
         public async Task<string> GetAccessTokenAsync()
         {
-            // EcoCash OAuth2 Basic Authentication
-            var credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_consumerKey}:{_consumerSecret}"));
-
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/oauth2/token");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
-            request.Content = new StringContent("grant_type=client_credentials", Encoding.UTF8, "application/x-www-form-urlencoded");
-
-            var response = await _httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            var responseString = await response.Content.ReadAsStringAsync();
-            using var document = JsonDocument.Parse(responseString);
-            
-            return document.RootElement.GetProperty("access_token").GetString();
+            // EcoCash V2 Sandbox typically uses X-API-KEY directly in headers for specific endpoints
+            // Keeping this for compatibility with other parts of the system if needed
+            return string.Empty;
         }
 
         public async Task<bool> InitiateMerchantPaymentAsync(string customerPhone, decimal amount, string merchantCode, string referenceCode)
         {
             try
             {
-                var token = await GetAccessTokenAsync();
+                // Format the phone number to numeric-only 12-digit 263... format
+                string formattedPhone = FormatMsisdn(customerPhone);
 
-                // Payload matches exactly with the provided EcoCash API documentation image
+                // Using the specific V2 sandbox endpoint provided in the image
+                string endpoint = $"{_baseUrl}/api/v2/payment/instant/c2b/sandbox";
+
                 var payload = new
                 {
-                    clientCorrelator = Guid.NewGuid().ToString(), // Unique ID per request
-                    notifyUrl = _config["EcoCash:NotifyUrl"],     // Where EcoCash sends the success receipt
-                    referenceCode = referenceCode,
-                    tranType = "MERCH",
-                    amount = amount.ToString("0.00"),             // API requires string formatted to 2 decimal places
-                    currency = "ZWL",                             // Or USD based on your sandbox setup
-                    customerMsisdn = customerPhone,               // e.g., "0771234567"
-                    merchantCode = merchantCode                   // e.g., "12345"
+                    customerMsisdn = formattedPhone,
+                    amount = amount, // Numeric as per image
+                    reason = "Payment",
+                    currency = "USD",
+                    sourceReference = Guid.NewGuid().ToString() // Valid UUID as per image
                 };
 
-                var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/transactions/merchantPay");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+                request.Headers.Add("X-API-KEY", _apiKey);
                 request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.SendAsync(request);
                 
-                // Returns true if EcoCash responds with 200/201 (Push prompt successfully sent to phone)
+                string responseContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"EcoCash V2 Response: {response.StatusCode} - {responseContent}");
+
                 return response.IsSuccessStatusCode; 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"EcoCash API Error: {ex.Message}");
+                Console.WriteLine($"EcoCash API V2 Error: {ex.Message}");
                 return false;
             }
+        }
+
+        private string FormatMsisdn(string phone)
+        {
+            if (string.IsNullOrEmpty(phone)) return string.Empty;
+
+            // Remove all non-numeric characters (including '+')
+            string digitsOnly = new string(phone.Where(char.IsDigit).ToArray());
+
+            // Extract last 9 digits and prefix with 263
+            if (digitsOnly.Length >= 9)
+            {
+                return "263" + digitsOnly.Substring(digitsOnly.Length - 9);
+            }
+
+            return digitsOnly;
         }
     }
 }

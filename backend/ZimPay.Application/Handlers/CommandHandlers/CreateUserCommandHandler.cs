@@ -32,7 +32,7 @@ namespace ZimPay.Application.Handlers.CommandHandlers
             {
                 Name = request.Name,
                 Email = request.Email,
-                Phone = request.Phone,
+                Phone = (request.Phone ?? "").Replace("+", ""),
                 NfcIdentityToken = generatedNfcToken, // Save it to the database
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true,

@@ -7,5 +7,6 @@ namespace ZimPay.Application.Interfaces
     {
         string GenerateDigitalToken(PaymentMethod paymentMethod, string rawCardNumber);
         bool ValidateDigitalToken(string token);
+        string GetSecureDataFromToken(string token);
     }
 }

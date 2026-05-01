@@ -39,14 +39,14 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                 throw new InvalidOperationException($"User with ID {request.UserId} not found.");
             }
 
-            string fullNumber = (request.PaymentMethod.CardNumber ?? "").Replace(" ", "");
+            string fullNumber = (request.PaymentMethod.CardNumber ?? "").Replace(" ", "").Replace("+", "");
             string maskedCardNumber;
 
             if (request.PaymentMethod.Type == CardType.EcoCash)
             {
-                // Mask Zimbabwean Phone: +263 772 123 456 -> +263 ••• ••• 456
+                // Mask Zimbabwean Phone: 263 772 123 456 -> 263 ••• ••• 456
                 maskedCardNumber = fullNumber.Length >= 3
-                    ? $"+263 ••• ••• {fullNumber.Substring(fullNumber.Length - 3)}"
+                    ? $"263 ••• ••• {fullNumber.Substring(fullNumber.Length - 3)}"
                     : fullNumber;
                 _logger.LogInformation("📱 [BACKEND] Processing EcoCash. Masked Phone: {MaskedPhone}", maskedCardNumber);
             }
@@ -73,7 +73,7 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                 Type = request.PaymentMethod.Type,
                 CardNumber = maskedCardNumber,
                 BankName = request.PaymentMethod.Type == CardType.EcoCash ? "EcoCash" : (request.PaymentMethod.BankName ?? "ZimPay Bank"),
-                AccountNumber = request.PaymentMethod.AccountNumber,
+                AccountNumber = request.PaymentMethod.Type == CardType.EcoCash ? maskedCardNumber : request.PaymentMethod.AccountNumber,
                 HolderName = request.PaymentMethod.HolderName,
                 ExpiryDate = request.PaymentMethod.ExpiryDate,
                 IsDefault = request.PaymentMethod.IsDefault,
