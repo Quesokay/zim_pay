@@ -63,9 +63,9 @@ class _SignupScreenState extends State<SignupScreen> {
         Uri.parse('${ApiConstants.baseUrl}/User'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'name': _nameController.text,
-          'email': _emailController.text,
-          'pin': _pinController.text,
+          'Name': _nameController.text,
+          'Email': _emailController.text,
+          'Pin': _pinController.text,
         }),
       );
 
@@ -181,7 +181,11 @@ class _SignupScreenState extends State<SignupScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: _isLoading 
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
                       : Text('Register & Link Tag', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ),
