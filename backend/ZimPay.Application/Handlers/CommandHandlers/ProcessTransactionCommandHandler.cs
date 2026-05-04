@@ -47,6 +47,7 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                 _logger.LogWarning("❌ [POS] Transaction declined: Token {Token} not found in database.", request.DigitalToken);
                 throw new InvalidOperationException("Transaction Declined: Unrecognized NFC tag.");
             }
+            
 
             if (!user.ContactlessEnabled)
             {
