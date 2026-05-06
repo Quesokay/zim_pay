@@ -14,6 +14,11 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<LoginEvent>(_onLogin);
     on<UpdateUserEvent>(_onUpdateUser);
     on<SetUserEvent>(_onSetUser);
+    on<LogoutEvent>(_onLogout);
+  }
+
+  void _onLogout(LogoutEvent event, Emitter<UserState> emit) {
+    emit(UserInitial());
   }
 
   void _onSetUser(SetUserEvent event, Emitter<UserState> emit) {

@@ -34,6 +34,8 @@ class SetUserEvent extends UserEvent {
   List<Object> get props => [user];
 }
 
+class LogoutEvent extends UserEvent {}
+
 class UpdateUserEvent extends UserEvent {
   final String? name;
   final String? phone;

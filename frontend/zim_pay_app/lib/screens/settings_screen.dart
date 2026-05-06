@@ -11,6 +11,7 @@ import '../services/biometric_service.dart';
 import 'link_tag_screen.dart';
 import 'home_screen.dart';
 import 'cards_screen.dart';
+import 'login_screen.dart';
 import 'transaction_history_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -30,6 +31,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final userState = context.read<UserBloc>().state;
     if (userState is UserCreated) {
       _currentLimit = userState.user.tapLimit;
+    }
+  }
+
+  Future<void> _logout() async {
+    final userBloc = context.read<UserBloc>();
+    final navigator = Navigator.of(context);
+
+    bool confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Logout?'),
+            content: const Text('Are you sure you want to log out of ZimPay?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Logout', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (confirm && mounted) {
+      userBloc.add(LogoutEvent());
+      navigator.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
     }
   }
 
@@ -428,6 +461,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 _linkNewTag(userState.user.id);
                               }
                             },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Account Actions Group
+                    _buildSectionHeader('ACCOUNT', primaryColor),
+                    const SizedBox(height: 16),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: surfaceContainerLowestColor,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        children: [
+                          _buildClickableItem(
+                            icon: Icons.logout,
+                            title: 'Logout',
+                            subtitle: 'Sign out of your account',
+                            onSurfaceColor: Colors.red,
+                            onSurfaceVariantColor: Colors.redAccent,
+                            surfaceContainerHighColor: Colors.red.withValues(alpha: 0.1),
+                            outlineVariantColor: Colors.red.withValues(alpha: 0.3),
+                            onTap: _logout,
                           ),
                         ],
                       ),
