@@ -10,6 +10,28 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     on<LoadTransactions>(_onLoadTransactions);
     on<LoadPendingTransactions>(_onLoadPendingTransactions);
     on<ApproveTransaction>(_onApproveTransaction);
+    on<PollEcoCashStatus>(_onPollEcoCashStatus);
+  }
+
+  Future<void> _onPollEcoCashStatus(
+    PollEcoCashStatus event,
+    Emitter<TransactionState> emit,
+  ) async {
+    try {
+      final status = await transactionRepository.getEcoCashStatus(event.endUserId, event.clientCorrelator);
+      
+      if (status.toUpperCase() == 'SUCCESS' || status.toUpperCase() == 'COMPLETED') {
+        // Refresh everything to show the completed transaction
+        final transactions = await transactionRepository.getTransactions(event.userId);
+        final pendingTransactions = await transactionRepository.getPendingTransactions(event.userId);
+        emit(state.copyWith(
+          transactions: transactions,
+          pendingTransactions: pendingTransactions,
+        ));
+      }
+    } catch (_) {
+      // Silently fail for polling
+    }
   }
 
   Future<void> _onLoadTransactions(

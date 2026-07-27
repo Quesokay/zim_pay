@@ -27,23 +27,22 @@ namespace ZimPay.Application.Handlers.CommandHandlers
 
         public async Task<bool> Handle(ProcessEcoCashCallbackCommand request, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("🔔 [WEBHOOK] Received EcoCash Callback for Ref: {RefCode} with Status: {Status}", request.ReferenceCode, request.TransactionStatus);
+            _logger.LogInformation("🔔 [WEBHOOK] Received EcoCash Callback for Ref: {RefCode}, Corr: {Corr} with Status: {Status}",
+                request.ReferenceCode, request.ClientCorrelator, request.TransactionStatus);
 
-            // 1. Find the pending transaction using the Reference Code stored in the Description
-            var allTransactions = await _transactionRepository.GetAllAsync();
-            var pendingTransaction = allTransactions.FirstOrDefault(t => 
-                t.Status == "Pending" && 
-                t.Description != null && 
-                t.Description.Contains(request.ReferenceCode));
+            // 1. Find the pending transaction using the Reference Code or Correlator
+            var pendingTransaction = await _transactionRepository.GetByEcoCashIdentifiersAsync(request.ReferenceCode, request.ClientCorrelator);
 
             if (pendingTransaction == null)
             {
-                _logger.LogWarning("⚠️ [WEBHOOK] Could not find a pending transaction for Ref: {RefCode}", request.ReferenceCode);
+                _logger.LogWarning("⚠️ [WEBHOOK] Could not find a pending transaction for Ref: {RefCode} or Corr: {Corr}",
+                    request.ReferenceCode, request.ClientCorrelator);
                 return false;
             }
 
             // 2. Process based on EcoCash Status
-            if (request.TransactionStatus.ToUpper() == "COMPLETED")
+            string status = request.TransactionStatus?.ToUpper();
+            if (status == "COMPLETED" || status == "SUCCESS")
             {
                 // Update Transaction
                 pendingTransaction.Status = "Completed";

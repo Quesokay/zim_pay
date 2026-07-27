@@ -2,7 +2,7 @@ using MediatR;
 
 namespace ZimPay.Application.Commands.Transaction
 {
-    public class ProcessTransactionCommand : IRequest<bool>
+    public class ProcessTransactionCommand : IRequest<object>
     {
         public string DigitalToken { get; set; }
         public decimal Amount { get; set; }

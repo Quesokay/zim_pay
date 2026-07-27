@@ -33,7 +33,13 @@ namespace ZimPay.Domain
         
         public int? RecipientUserId { get; set; } // For transfers
         public int? PaymentMethodId { get; set; }
-        
+
+        [MaxLength(100)]
+        public string ReferenceCode { get; set; }
+
+        [MaxLength(100)]
+        public string ClientCorrelator { get; set; }
+
         // Navigation properties
         public User User { get; set; }
         public User Recipient { get; set; }

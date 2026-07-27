@@ -55,4 +55,22 @@ class TransactionRepository {
       throw Exception(errorData['message'] ?? 'Failed to approve transaction');
     }
   }
+
+  Future<String> getEcoCashStatus(String endUserId, String clientCorrelator) async {
+    developer.log('Fetching EcoCash status for $endUserId | $clientCorrelator from: $baseUrl/Transaction/ecocash-status/$endUserId/$clientCorrelator');
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/Transaction/ecocash-status/$endUserId/$clientCorrelator'),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return data['data'] ?? 'UNKNOWN';
+      }
+      return 'FAILED';
+    } catch (e) {
+      developer.log('Error getting EcoCash status: $e');
+      return 'FAILED';
+    }
+  }
 }

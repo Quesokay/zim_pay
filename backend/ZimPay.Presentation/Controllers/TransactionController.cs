@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
+using ZimPay.Application.Interfaces;
 
 namespace ZimPay.Presentation.Controllers
 {
@@ -18,12 +19,18 @@ namespace ZimPay.Presentation.Controllers
         private readonly IMediator _mediator;
         private readonly ILogger<TransactionController> _logger;
         private readonly ZimPay.Infrastructure.AppDbContext _context;
+        private readonly IEcoCashService _ecoCashService;
 
-        public TransactionController(IMediator mediator, ILogger<TransactionController> logger, ZimPay.Infrastructure.AppDbContext context)
+        public TransactionController(
+            IMediator mediator,
+            ILogger<TransactionController> logger,
+            ZimPay.Infrastructure.AppDbContext context,
+            IEcoCashService ecoCashService)
         {
             _mediator = mediator;
             _logger = logger;
             _context = context;
+            _ecoCashService = ecoCashService;
         }
 
         [HttpPost]
@@ -45,18 +52,11 @@ namespace ZimPay.Presentation.Controllers
         {
             try 
             {
-                var success = await _mediator.Send(command);
-                return Ok(ApiResponse<bool>.SuccessResponse(true, "Payment Approved"));
+                var result = await _mediator.Send(command);
+                return Ok(ApiResponse<object>.SuccessResponse(result, "Transaction Processed"));
             }
             catch (System.InvalidOperationException ex)
             {
-                if (ex.Message.StartsWith("BIOMETRIC_REQUIRED:"))
-                {
-                    var parts = ex.Message.Split(':');
-                    var transactionId = parts[1];
-                    return Ok(ApiResponse<object>.SuccessResponse(new { biometricRequired = true, transactionId = int.Parse(transactionId) }, "Biometric verification required."));
-                }
-
                 _logger.LogWarning(ex, "Transaction processing failed: {Message}", ex.Message);
                 return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
@@ -101,50 +101,62 @@ namespace ZimPay.Presentation.Controllers
             return Ok(ApiResponse<List<TransactionDto>>.SuccessResponse(transactions, "Pending transactions retrieved successfully."));
         }
 
+        [HttpGet("ecocash-status/{endUserId}/{clientCorrelator}")]
+        public async Task<IActionResult> GetEcoCashStatus(string endUserId, string clientCorrelator)
+        {
+            try
+            {
+                var status = await _ecoCashService.GetTransactionStatusAsync(endUserId, clientCorrelator);
+                return Ok(ApiResponse<string>.SuccessResponse(status, "Status retrieved from EcoCash EIP"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking EcoCash status");
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+        }
+
         [HttpPost("ecocash-webhook")]
-        [AllowAnonymous] // CRITICAL: Allows external EcoCash server to hit this endpoint without a JWT
+        [AllowAnonymous]
         public async Task<IActionResult> EcoCashWebhook([FromBody] JsonElement payload)
         {
             try
             {
-                // Print the raw payload to the console so you can see exactly what EcoCash sends!
-                Console.WriteLine("📥 RAW ECOCASH WEBHOOK PAYLOAD:");
-                Console.WriteLine(payload.GetRawText());
+                _logger.LogInformation("📥 RAW ECOCASH WEBHOOK PAYLOAD: {Payload}", payload.GetRawText());
 
-                // Safely extract the fields (Sandbox APIs sometimes nest these differently)
                 string refCode = "";
-                string status = "COMPLETED"; // Defaulting for testing purposes
+                string clientCorr = "";
+                string status = "UNKNOWN";
 
                 if (payload.TryGetProperty("referenceCode", out JsonElement refElement))
-                {
                     refCode = refElement.GetString();
-                }
+
+                if (payload.TryGetProperty("clientCorrelator", out JsonElement corrElement))
+                    clientCorr = corrElement.GetString();
                 
                 if (payload.TryGetProperty("transactionStatus", out JsonElement statusElement))
-                {
                     status = statusElement.GetString();
-                }
 
-                if (string.IsNullOrEmpty(refCode))
+                if (string.IsNullOrEmpty(refCode) && string.IsNullOrEmpty(clientCorr))
                 {
-                    return BadRequest("Missing reference code");
+                    return BadRequest("Missing identification (referenceCode or clientCorrelator)");
                 }
 
                 var command = new ProcessEcoCashCallbackCommand
                 {
                     ReferenceCode = refCode,
+                    ClientCorrelator = clientCorr,
                     TransactionStatus = status
                 };
 
                 await _mediator.Send(command);
 
-                // Always return 200 OK so EcoCash knows we received it
                 return Ok(new { message = "Callback processed successfully" });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Webhook Error: {ex.Message}");
-                return StatusCode(500, "Internal Server Error during callback processing");
+                _logger.LogError(ex, "Webhook Error");
+                return StatusCode(500, "Internal Server Error");
             }
         }
     }

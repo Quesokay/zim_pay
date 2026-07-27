@@ -18,6 +18,7 @@ namespace ZimPay.Application.Interfaces
         Task UpdateAsync(Transaction transaction);
         Task DeleteAsync(int id);
         Task<IEnumerable<Transaction>> GetPendingByUserIdAsync(int userId);
+        Task<Transaction> GetByEcoCashIdentifiersAsync(string refCode, string clientCorr);
         Task SaveChangesAsync();
     }
 }

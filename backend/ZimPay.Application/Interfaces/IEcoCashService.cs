@@ -7,8 +7,14 @@ namespace ZimPay.Application.Interfaces
         Task<string> GetAccessTokenAsync();
         
         /// <summary>
-        /// Initiates an EcoCash Merchant Payment prompt on the customer's phone.
+        /// Initiates an EcoCash Merchant Payment prompt on the customer's phone using EIP API.
+        /// Returns the clientCorrelator if successful.
         /// </summary>
-        Task<bool> InitiateMerchantPaymentAsync(string customerPhone, decimal amount, string merchantCode, string referenceCode);
+        Task<string> InitiateMerchantPaymentAsync(string customerPhone, decimal amount, string merchantCode, string referenceCode);
+
+        /// <summary>
+        /// Checks the status of a transaction.
+        /// </summary>
+        Task<string> GetTransactionStatusAsync(string endUserId, string clientCorrelator);
     }
 }

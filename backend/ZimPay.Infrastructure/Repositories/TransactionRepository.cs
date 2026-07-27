@@ -84,6 +84,15 @@ namespace ZimPay.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Transaction> GetByEcoCashIdentifiersAsync(string refCode, string clientCorr)
+        {
+            return await _context.Transactions
+                .FirstOrDefaultAsync(t =>
+                    t.Status == "Pending" &&
+                    ((refCode != null && t.ReferenceCode == refCode) ||
+                     (clientCorr != null && t.ClientCorrelator == clientCorr)));
+        }
+
         public async Task AddAsync(Transaction transaction)
         {
             _context.Transactions.Add(transaction);
