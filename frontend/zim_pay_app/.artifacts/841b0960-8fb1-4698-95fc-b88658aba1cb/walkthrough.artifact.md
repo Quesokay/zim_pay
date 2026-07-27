@@ -12,18 +12,17 @@ Updated `appsettings.json` in `ZimPay.Presentation` with the new EIP Sandbox cre
 - **Notify URL:** Set to the base ngrok URL `https://edition-pecan-evacuate.ngrok-free.dev`.
 
 ### 2. DTO Definition
-Created `EcoCashEipDtos.cs` in `ZimPay.Application/DTOs` to define the request and response structures required by the EIP API:
-- `EcoCashEipRequest`: Maps to the `PaymentRequest` structure.
-- `PaymentAmount`, `ChargingInformation`, `ChargeMetaData`: Nested structures for precise payment details.
-- `EcoCashEipResponse`: For handling API responses.
+Created and refined `EcoCashEipDtos.cs` in `ZimPay.Application/DTOs` to perfectly match the sandbox API:
+- **Request Payload:** Renamed `purchaseCategoryCode` to `channel` as required by the latest EIP documentation.
+- **Enhanced Response:** Expanded `EcoCashEipResponse` to capture all 20+ fields from the sandbox, including `transactionOperationStatus`, `text`, and `statusMessage`.
+- **Intelligent Status Mapping:** Implemented logic to normalize diverse status indicators (e.g., mapping "Transaction Successful" messages to a standard `SUCCESS` state).
 
 ### 3. Service Implementation
 Modified `EcoCashService.cs` in `ZimPay.Infrastructure/Services`:
-- Switched from `X-API-KEY` header to **Basic Authentication**.
-- Updated `InitiateMerchantPaymentAsync` to use the `/transactions/amount/` endpoint with the new payload.
-- **Dynamic Webhook URL:** The service now automatically appends `/api/Transaction/ecocash-webhook` to the `NotifyUrl` from config if the path is missing.
-- Implemented `GetTransactionStatusAsync` to check payment status via the GET endpoint.
-- Maintained MSISDN formatting to ensure phone numbers are in the correct `263...` format.
+- **Official Documentation Alignment:** Re-verified all endpoints against the provided documentation image (POST `/transactions/amount/` and GET `/{endUserId}/transactions/amount/{correlator}`).
+- **Merchant Credential Update:** Switched to the `001535` merchant profile with `UAT00003` terminal ID and `POS` channel.
+- **Enhanced Debugging:** Added explicit console logging for the `Authorization` header and target URL to verify standard `Basic c2J4X2FiZGQxNGQ0MjMwNzpjN1pAbiRtVFE4NW1XV0I4dmRaTQ==` usage.
+- **WAF/Cloudflare Compatibility:** Maintained standard `User-Agent` and `Accept` headers to bypass automated bot detection blocks.
 
 ### 4. Controller & Handler Updates
 Modified `TransactionController.cs` in `ZimPay.Presentation`:
@@ -49,6 +48,7 @@ Optimized the backend data layer for faster EcoCash lookups:
 
 ### 2. Merchant Experience (POS Screen)
 - **Real-time Polling:** Added a "Processing EcoCash Payment" dialog that polls the backend every 2 seconds after a push is sent.
+- **Robust Status Handling:** The polling mechanism now recognizes `CHARGED` as a successful state and handles `EXPIRED` or `CANCELLED` errors gracefully.
 - **Live Feedback:** The merchant now sees a success dialog *only* after the customer has successfully entered their PIN on their phone.
 
 ### 3. Customer Experience (Home Screen)

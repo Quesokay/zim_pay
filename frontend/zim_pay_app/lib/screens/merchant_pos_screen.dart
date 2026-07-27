@@ -207,11 +207,11 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
                 final data = jsonDecode(response.body);
                 final status = data['data']?.toString().toUpperCase();
 
-                if (status == 'SUCCESS' || status == 'COMPLETED') {
+                if (status == 'SUCCESS' || status == 'COMPLETED' || status == 'CHARGED') {
                   timer.cancel();
                   if (Navigator.canPop(context)) Navigator.pop(context); // Close polling dialog
                   _showSuccessDialog(amount);
-                } else if (status == 'FAILED' || status == 'DECLINED' || status == 'CANCELLED') {
+                } else if (status == 'FAILED' || status == 'DECLINED' || status == 'CANCELLED' || status == 'EXPIRED') {
                   timer.cancel();
                   if (Navigator.canPop(context)) Navigator.pop(context);
                   _handleError('EcoCash Payment $status');
