@@ -9,8 +9,8 @@ x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-[Bb]in/
-[Oo]bj/
+**/[Bb]in/
+**/[Oo]bj/
 [Ll]og/
 [Ll]ogs/
 
@@ -52,6 +52,10 @@ appsettings.*.local.json
 # Logs
 *.log
 logs/
+
+# Agent Artifacts
+.artifacts/
+scratch/
 
 # NuGet
 *.nupkg
@@ -114,3 +118,9 @@ __pycache__/
 .project
 .settings/
 .factorypath
+
+# Flutter specific from root
+frontend/zim_pay_app/build/
+frontend/zim_pay_app/.dart_tool/
+frontend/zim_pay_app/.flutter-plugins
+frontend/zim_pay_app/.flutter-plugins-dependencies

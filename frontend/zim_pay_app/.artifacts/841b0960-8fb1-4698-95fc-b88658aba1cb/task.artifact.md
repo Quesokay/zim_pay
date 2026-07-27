@@ -1,0 +1,20 @@
+- [x] Research EcoCash EIP API requirements
+- [x] Update `appsettings.json` with new sandbox credentials
+- [x] Create EIP DTOs in `ZimPay.Application`
+- [x] Update `IEcoCashService` interface
+- [x] Implement new EIP logic in `EcoCashService`
+- [x] Update `TransactionController` with status endpoint and enhanced webhook
+- [x] Refine correlation tracking across Service and Handlers
+- [x] Implement frontend status polling in Merchant POS
+- [x] Update Home Screen UI for EcoCash pending states
+- [x] Fix compilation errors (missing imports for `Transaction` and `Timer`)
+- [x] Fix Cloudflare 403 Forbidden by adding User-Agent headers
+- [x] Re-verify official sandbox endpoints against documentation image
+- [x] Add explicit logging for Basic Authorization header
+- [x] Update Merchant Credentials to `001535` / `UAT STORE 3`
+- [x] Implement 10-digit numeric `clientCorrelator` and `TEST_` reference codes
+- [x] Expand Database Schema for EcoCash identifiers and run migrations
+- [x] Optimize Repository lookups using new database columns
+- [x] Refine EIP DTOs and Service to match latest Sandbox documentation
+- [x] Update frontend polling logic for more robust status detection (CHARGED, EXPIRED)
+- [x] Verify configuration and service registration

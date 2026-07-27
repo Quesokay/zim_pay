@@ -10,7 +10,7 @@ using ZimPay.Domain;
 
 namespace ZimPay.Application.Handlers.CommandHandlers
 {
-    public class ProcessTransactionCommandHandler : IRequestHandler<ProcessTransactionCommand, bool>
+    public class ProcessTransactionCommandHandler : IRequestHandler<ProcessTransactionCommand, object>
     {
         private readonly IPaymentMethodRepository _paymentMethodRepository;
         private readonly ITransactionRepository _transactionRepository;
@@ -35,7 +35,7 @@ namespace ZimPay.Application.Handlers.CommandHandlers
             _tokenservice = tokenizationService;
         }
 
-        public async Task<bool> Handle(ProcessTransactionCommand request, CancellationToken cancellationToken)
+        public async Task<object> Handle(ProcessTransactionCommand request, CancellationToken cancellationToken)
         {
             _logger.LogInformation("💳 [POS] Processing transaction: Amount=${Amount}, Token={Token}", request.Amount, request.DigitalToken);
 
@@ -81,14 +81,14 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                     rawPhone = user.Phone;
                 }
 
-                bool pushSent = await _ecoCashService.InitiateMerchantPaymentAsync(
+                string clientCorrelator = await _ecoCashService.InitiateMerchantPaymentAsync(
                     customerPhone: rawPhone,
                     amount: request.Amount, 
                     merchantCode: request.MerchantName ?? "12345", 
                     referenceCode: referenceCode
                 );
 
-                if (pushSent)
+                if (!string.IsNullOrEmpty(clientCorrelator))
                 {
                     // Save as pending while we wait for the EcoCash Webhook Callback
                     var pendingEcoCashTransaction = new Transaction
@@ -100,12 +100,20 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                         Status = "Pending",
                         Date = DateTime.UtcNow,
                         MerchantName = request.MerchantName,
-                        Description = $"EcoCash POS - Ref: {referenceCode}"
+                        Description = $"EcoCash POS Payment",
+                        ReferenceCode = referenceCode,
+                        ClientCorrelator = clientCorrelator
                     };
                     await _transactionRepository.AddAsync(pendingEcoCashTransaction);
                     
-                    _logger.LogInformation("✅ [POS] EcoCash USSD prompt sent successfully.");
-                    return true;
+                    _logger.LogInformation("✅ [POS] EcoCash USSD prompt sent successfully. Correlator: {Corr}", clientCorrelator);
+
+                    return new {
+                        success = true,
+                        isEcoCash = true,
+                        clientCorrelator = clientCorrelator,
+                        endUserId = rawPhone
+                    };
                 }
                 else
                 {
@@ -134,7 +142,7 @@ namespace ZimPay.Application.Handlers.CommandHandlers
                     Description = "ZimPay Tap-to-Pay POS"
                 };
                 await _transactionRepository.AddAsync(pendingTransaction);
-                throw new InvalidOperationException($"BIOMETRIC_REQUIRED:{pendingTransaction.Id}");
+                return new { biometricRequired = true, transactionId = pendingTransaction.Id };
             }
 
             // 6. Auto-Approve & Deduct

@@ -14,6 +14,7 @@ class Transaction {
   final Color iconColor;
   final Color bgColor;
   final String? paymentMethodId;
+  final String? clientCorrelator;
 
   Transaction({
     required this.id,
@@ -26,12 +27,14 @@ class Transaction {
     required this.iconColor,
     required this.bgColor,
     this.paymentMethodId,
+    this.clientCorrelator,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
     final String typeFromRow = json['type'] ?? 'Payment';
     // Normalize type for comparison
     final String type = typeFromRow.toLowerCase();
+    final String description = json['description'] ?? 'Transaction';
     
     final String statusStr = (json['status'] ?? 'Completed').toString().toLowerCase();
     
@@ -42,6 +45,12 @@ class Transaction {
       status = TransactionStatus.declined;
     } else {
       status = TransactionStatus.completed;
+    }
+
+    // Extract clientCorrelator if it exists in the description (backend format: "... | Corr: ABCD1234")
+    String? clientCorrelator;
+    if (description.contains('| Corr: ')) {
+      clientCorrelator = description.split('| Corr: ').last.trim();
     }
 
     IconData icon;
@@ -56,6 +65,10 @@ class Transaction {
       icon = Icons.send;
       iconColor = const Color(0xFF0058BA);
       bgColor = const Color(0xFFDEE3E8);
+    } else if (description.contains('EcoCash')) {
+      icon = Icons.mobile_friendly;
+      iconColor = const Color(0xFF006A2B);
+      bgColor = const Color(0xFFCFFFCE);
     } else {
       icon = Icons.shopping_bag;
       iconColor = const Color(0xFF0058BA);
@@ -64,7 +77,7 @@ class Transaction {
 
     return Transaction(
       id: json['id'].toString(),
-      title: json['description'] ?? 'Transaction',
+      title: description,
       type: typeFromRow,
       date: DateTime.parse(json['date']),
       status: status,
@@ -73,8 +86,11 @@ class Transaction {
       iconColor: iconColor,
       bgColor: bgColor,
       paymentMethodId: json['paymentMethodId']?.toString(),
+      clientCorrelator: clientCorrelator,
     );
   }
+
+  bool get isEcoCash => title.contains('EcoCash') || clientCorrelator != null;
 
   bool get isSpending => !type.toLowerCase().contains('topup');
 

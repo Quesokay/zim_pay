@@ -33,3 +33,18 @@ class ApproveTransaction extends TransactionEvent {
   @override
   List<Object?> get props => [transactionId];
 }
+
+class PollEcoCashStatus extends TransactionEvent {
+  final int userId;
+  final String endUserId;
+  final String clientCorrelator;
+
+  const PollEcoCashStatus({
+    required this.userId,
+    required this.endUserId,
+    required this.clientCorrelator,
+  });
+
+  @override
+  List<Object?> get props => [userId, endUserId, clientCorrelator];
+}

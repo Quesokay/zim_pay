@@ -14,6 +14,7 @@ import '../blocs/transaction/transaction_bloc.dart';
 import '../blocs/transaction/transaction_event.dart';
 import '../blocs/transaction/transaction_state.dart';
 import '../blocs/user/user_bloc.dart';
+import '../models/transaction.dart';
 import '../models/wallet_item.dart';
 import 'add_to_wallet_screen.dart';
 import 'card_details_screen.dart';
@@ -286,11 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                             return Column(
                               children: txState.pendingTransactions.map((tx) {
-                                return _buildPendingTransactionCard(
-                                  int.parse(tx.id),
-                                  tx.amount,
-                                  tx.title,
-                                );
+                                return _buildPendingTransactionCard(tx);
                               }).toList(),
                             );
                           },
@@ -541,24 +538,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPendingTransactionCard(int transactionId, double amount, String merchantName) {
+  Widget _buildPendingTransactionCard(Transaction tx) {
+    bool isEcoCash = tx.isEcoCash;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF4E5), // Soft warning orange
+        color: isEcoCash ? const Color(0xFFE8F5E9) : const Color(0xFFFFF4E5), // Soft green for EcoCash
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFFB020).withValues(alpha: 0.3)),
+        border: Border.all(color: (isEcoCash ? Colors.green : const Color(0xFFFFB020)).withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFB020).withValues(alpha: 0.2),
+              color: (isEcoCash ? Colors.green : const Color(0xFFFFB020)).withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.fingerprint, color: Color(0xFFB27B16)),
+            child: Icon(
+              isEcoCash ? Icons.mobile_friendly : Icons.fingerprint,
+              color: isEcoCash ? Colors.green[700] : const Color(0xFFB27B16),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -567,12 +569,18 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Approval Required',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: const Color(0xFF8A5A00)),
+                  isEcoCash ? 'EcoCash PIN Required' : 'Approval Required',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.bold,
+                    color: isEcoCash ? Colors.green[900] : const Color(0xFF8A5A00),
+                  ),
                 ),
                 Text(
-                  '\$${amount.toStringAsFixed(2)} at $merchantName',
-                  style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF8A5A00)),
+                  '\$${tx.amount.toStringAsFixed(2)} at ${tx.title}',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: isEcoCash ? Colors.green[800] : const Color(0xFF8A5A00),
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -580,13 +588,20 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () => _executeFingerprintApproval(transactionId, amount),
+            onPressed: () {
+              if (isEcoCash) {
+                // For EcoCash, just refresh to check if webhook came in
+                _initialLoad();
+              } else {
+                _executeFingerprintApproval(int.parse(tx.id), tx.amount);
+              }
+            },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFB020),
+              backgroundColor: isEcoCash ? Colors.green : const Color(0xFFFFB020),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Review'),
+            child: Text(isEcoCash ? 'Check' : 'Review'),
           ),
         ],
       ),

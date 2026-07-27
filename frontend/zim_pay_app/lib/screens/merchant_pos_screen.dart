@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert'; // Required for utf8 decoding
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../constants.dart';
 import '../blocs/transaction/transaction_bloc.dart';
@@ -148,6 +149,13 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
                 ],
               ),
             );
+          } else if (responseData is Map && responseData['isEcoCash'] == true) {
+            // ECOCASH PENDING - START POLLING
+            final String clientCorrelator = responseData['clientCorrelator'];
+            final String endUserId = responseData['endUserId'];
+            
+            if (!mounted) return;
+            _showEcoCashPollingDialog(clientCorrelator, endUserId, amount);
           } else {
             // FULL SUCCESS!
             showDialog(
@@ -181,6 +189,93 @@ class _MerchantPosScreenState extends State<MerchantPosScreen> {
     } catch (e) {
       _handleError('Network error connecting to payment server.');
     }
+  }
+
+  void _showEcoCashPollingDialog(String correlator, String endUserId, String amount) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          // Internal polling logic
+          Timer.periodic(const Duration(seconds: 2), (timer) async {
+            try {
+              final url = Uri.parse('${ApiConstants.baseUrl}/Transaction/ecocash-status/$endUserId/$correlator');
+              final response = await http.get(url);
+              
+              if (response.statusCode == 200) {
+                final data = jsonDecode(response.body);
+                final status = data['data']?.toString().toUpperCase();
+
+                if (status == 'SUCCESS' || status == 'COMPLETED' || status == 'CHARGED') {
+                  timer.cancel();
+                  if (Navigator.canPop(context)) Navigator.pop(context); // Close polling dialog
+                  _showSuccessDialog(amount);
+                } else if (status == 'FAILED' || status == 'DECLINED' || status == 'CANCELLED' || status == 'EXPIRED') {
+                  timer.cancel();
+                  if (Navigator.canPop(context)) Navigator.pop(context);
+                  _handleError('EcoCash Payment $status');
+                }
+              }
+            } catch (e) {
+              // Ignore polling errors
+            }
+          });
+
+          return AlertDialog(
+            title: Row(
+              children: [
+                Image.network('https://upload.wikimedia.org/wikipedia/commons/e/e0/EcoCash_logo.png', height: 30, errorBuilder: (_,__,___) => const Icon(Icons.mobile_friendly, color: Colors.green)),
+                const SizedBox(width: 12),
+                const Text('Processing...'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Colors.green),
+                const SizedBox(height: 20),
+                Text('EcoCash prompt sent to customer.', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text('Waiting for customer to enter PIN on their phone...', textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600])),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  // Allow merchant to stop waiting (it will still process in background if user pins)
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel Waiting'),
+              )
+            ],
+          );
+        }
+      ),
+    );
+  }
+
+  void _showSuccessDialog(String amount) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Payment Approved ✅'),
+        content: Text('Successfully charged \$$amount via EcoCash.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _amountController.clear();
+                _statusMessage = 'Enter amount and press "Ready to Charge"';
+              });
+            },
+            child: const Text('OK'),
+          )
+        ],
+      ),
+    );
   }
 
   @override
