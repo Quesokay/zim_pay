@@ -52,7 +52,13 @@ namespace ZimPay.Infrastructure.Services
 
         public async Task<string> GetAccessTokenAsync()
         {
-            return string.Empty;
+            return GetBasicAuthHeaderValue();
+        }
+
+        private string GetBasicAuthHeaderValue()
+        {
+            string credentials = $"{_username}:{_password}";
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials));
         }
 
         public async Task<string> InitiateMerchantPaymentAsync(string customerPhone, decimal amount, string merchantCode, string referenceCode)
@@ -105,7 +111,7 @@ namespace ZimPay.Infrastructure.Services
 
                 var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/transactions/amount/");
 
-                string authString = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_username}:{_password}"));
+                string authString = GetBasicAuthHeaderValue();
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authString);
 
                 Console.WriteLine($"[DEBUG] Auth Header: Basic {authString}");
@@ -135,7 +141,7 @@ namespace ZimPay.Infrastructure.Services
                 string formattedPhone = FormatMsisdn(endUserId);
                 var request = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/{formattedPhone}/transactions/amount/{clientCorrelator}");
 
-                string authString = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_username}:{_password}"));
+                string authString = GetBasicAuthHeaderValue();
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authString);
 
                 var response = await _httpClient.SendAsync(request);
