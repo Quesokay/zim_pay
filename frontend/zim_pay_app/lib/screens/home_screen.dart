@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui';
 import '../services/biometric_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart'; // Added for ScrollDirection
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -51,16 +52,23 @@ class _HomeScreenState extends State<HomeScreen> {
       final walletState = context.read<WalletBloc>().state;
       if (walletState.walletItems.isNotEmpty) {
         int realCount = walletState.walletItems.length;
-        int next = _pageController.page!.round();
-        int actualIndex = next % realCount;
+        double page = _pageController.page!;
+        int actualIndex = page.round() % realCount;
 
         if (_currentPage != actualIndex) {
           setState(() {
             _currentPage = actualIndex;
           });
 
-          // Set default payment method without blocking UI or causing unnecessary rebuilds
-          scheduleMicrotask(() => _updateDefaultPaymentMethod(actualIndex));
+          // Only update if it's not already default to avoid redundant network calls
+          final item = walletState.walletItems[actualIndex];
+          bool alreadyDefault = false;
+          if (item is CreditCard) alreadyDefault = item.isDefault;
+          if (item is TransitPass) alreadyDefault = item.isDefault;
+
+          if (!alreadyDefault) {
+            scheduleMicrotask(() => _updateDefaultPaymentMethod(actualIndex));
+          }
         }
       }
     }
@@ -118,35 +126,91 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: surfaceColor,
       extendBody: true,
-      body: BlocListener<TransactionBloc, TransactionState>(
-        listenWhen: (previous, current) => 
-          current.pendingTransactions.length > previous.pendingTransactions.length,
-        listener: (context, state) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.white),
-                  const SizedBox(width: 12),
-                  const Expanded(child: Text('A payment requires your approval!')),
-                  TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      // The list will already show the card, so just scroll to top or highlight
-                    },
-                    child: const Text('VIEW', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<TransactionBloc, TransactionState>(
+            listenWhen: (previous, current) => 
+              current.pendingTransactions.length > previous.pendingTransactions.length,
+            listener: (context, state) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                      const SizedBox(width: 12),
+                      const Expanded(child: Text('A payment requires your approval!')),
+                      TextButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          // The list will already show the card, so just scroll to top or highlight
+                        },
+                        child: const Text('VIEW', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              backgroundColor: const Color(0xFFFFB020),
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 5),
-            ),
-          );
-        },
+                  backgroundColor: const Color(0xFFFFB020),
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 5),
+                ),
+              );
+            },
+          ),
+          BlocListener<WalletBloc, WalletState>(
+            listenWhen: (previous, current) => current.status == WalletStatus.success,
+            listener: (context, state) {
+              if (state.walletItems.isNotEmpty) {
+                // Find the default item's index
+                int defaultIndex = -1;
+                for (int i = 0; i < state.walletItems.length; i++) {
+                  final item = state.walletItems[i];
+                  bool isDef = false;
+                  if (item is CreditCard) isDef = item.isDefault;
+                  else if (item is TransitPass) isDef = item.isDefault;
+                  
+                  if (isDef) {
+                    defaultIndex = i;
+                    break;
+                  }
+                }
+
+                // CRITICAL FIX: Only synchronize if the user is NOT actively swiping
+                // This prevents the "reverting" bug where the carousel fights the user's input.
+                bool isUserInteracting = false;
+                if (_pageController.hasClients) {
+                  isUserInteracting = _pageController.position.userScrollDirection != ScrollDirection.idle;
+                }
+
+                if (defaultIndex != -1 && defaultIndex != _currentPage && !isUserInteracting) {
+                  // Synchronize carousel with the backend default card
+                  setState(() {
+                    _currentPage = defaultIndex;
+                  });
+                  
+                  // Calculate the closest page in the infinite carousel
+                  if (_pageController.hasClients) {
+                    int currentAbsolutePage = _pageController.page!.round();
+                    int currentActualIndex = currentAbsolutePage % state.walletItems.length;
+                    int diff = defaultIndex - currentActualIndex;
+                    
+                    // Handle wrap-around for shortest path
+                    if (diff > state.walletItems.length / 2) diff -= state.walletItems.length;
+                    else if (diff < -state.walletItems.length / 2) diff += state.walletItems.length;
+                    
+                    int targetPage = currentAbsolutePage + diff;
+                    _pageController.animateToPage(
+                      targetPage,
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                }
+              }
+            },
+          ),
+        ],
         child: BlocBuilder<WalletBloc, WalletState>(
           builder: (context, state) {
-          if (state.status == WalletStatus.loading) {
+          if (state.status == WalletStatus.loading && state.walletItems.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 

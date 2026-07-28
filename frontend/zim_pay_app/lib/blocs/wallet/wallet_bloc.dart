@@ -17,7 +17,6 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
   }
 
   Future<void> _onSetDefaultPaymentMethod(SetDefaultPaymentMethod event, Emitter<WalletState> emit) async {
-    emit(state.copyWith(status: WalletStatus.loading));
     try {
       await walletRepository.setDefaultPaymentMethod(event.userId, event.paymentMethodId);
       add(LoadWalletItems(userId: event.userId));

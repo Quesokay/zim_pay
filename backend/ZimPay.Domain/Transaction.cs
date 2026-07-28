@@ -19,14 +19,14 @@ namespace ZimPay.Domain
         public decimal Amount { get; set; }
         
         [MaxLength(500)]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(50)]
         public string Status { get; set; } = "Pending"; // "Completed", "Pending", "Declined", "Cancelled"
         
         [MaxLength(100)]
-        public string MerchantName { get; set; }
+        public string MerchantName { get; set; } = string.Empty;
 
         public DateTime Date { get; set; }
         public DateTime? CompletedAt { get; set; }
@@ -35,10 +35,10 @@ namespace ZimPay.Domain
         public int? PaymentMethodId { get; set; }
 
         [MaxLength(100)]
-        public string ReferenceCode { get; set; }
+        public string ReferenceCode { get; set; } = string.Empty;
 
         [MaxLength(100)]
-        public string ClientCorrelator { get; set; }
+        public string ClientCorrelator { get; set; } = string.Empty;
 
         // Navigation properties
         public User User { get; set; }

@@ -57,7 +57,7 @@ class _CardsScreenState extends State<CardsScreen> {
       extendBody: true,
       body: BlocBuilder<WalletBloc, WalletState>(
         builder: (context, state) {
-          if (state.status == WalletStatus.loading) {
+          if (state.status == WalletStatus.loading && state.walletItems.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
